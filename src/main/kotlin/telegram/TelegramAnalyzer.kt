@@ -1,15 +1,14 @@
 package telegram
 
-import com.github.demidko.aot.WordformMeaning.lookupForMeanings
+import com.github.demidko.aot.WordformMeaning
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = "C:/Users/oQaris/Downloads/Telegram Desktop/Sneg/result.json"
-const val topCount = 5
-const val minLenWord = 3
+const val jsonPath = "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
+const val topCount = 20
 
 @OptIn(ExperimentalSerializationApi::class)
 fun main() {
@@ -27,13 +26,20 @@ fun main() {
     println()
 
     println("Популярные слова:")
-    printWordsFrequency(allMessages, topCount)
+    printFrequency(allMessages, topCount)
     println()
 
     println("Популярные слова по пользователям:")
     allMessages.groupBy { it.from }.entries.forEach { (user, messages) ->
         println(user)
-        printWordsFrequency(messages, topCount)
+        printFrequency(messages, topCount)
+        println()
+    }
+
+    println("Любимые смайлики:")
+    allMessages.groupBy { it.from }.entries.forEach { (user, messages) ->
+        println(user)
+        printFrequency(messages, topCount, ::emojiFrequency)
         println()
     }
 
@@ -42,7 +48,7 @@ fun main() {
         v.map { it.text.simpleText() }
     }
     val userToWords = userToMessages.mapValues { (_, v) ->
-        v.flatMap { toWords(it.text.simpleText()) }
+        v.flatMap { it.text.simpleText().tokens().words() }
     }
     Table(padding = 5).apply {
         addColumn(
@@ -90,12 +96,21 @@ fun main() {
     }.print()
     println()
 
+    /*println(setRemWords.map {
+        try {
+            WordformMeaning.lookupForMeanings(it)[0].lemma
+        } catch (e: Exception) { it }
+    }.joinToString("\n"))*/
+}
 
-    val meanings = lookupForMeanings("стали")
-    println(meanings.toString())
-    println(meanings.joinToString("\n") {
-        "${it.lemma} ${it.morphology} ${it.partOfSpeech} ${it.transformations}"
-    })
+fun printInfoFromWord(word: String) {
+    val means = WordformMeaning.lookupForMeanings(word)
+    print("$word ")
+    if (means.isNotEmpty()) {
+        val mean = means[0]
+        print("${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
+    } else print("None")
+    println()
 }
 
 fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> = buildList {
@@ -112,9 +127,13 @@ fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> 
     }
 }
 
-fun printWordsFrequency(messages: List<Message>, limit: Int) {
-    val wordFreqByUser = wordsFrequency(messages)
-    val content3 = wordFreqByUser.take(limit)
+fun printFrequency(
+    messages: List<Message>,
+    limit: Int,
+    frequency: (List<Message>) -> List<Pair<String, Int>> = ::wordsFrequency
+) {
+    val freqByUser = frequency(messages)
+    val content3 = freqByUser.take(limit)
     Table(padding = 5).apply {
         add(content3.map { it.first })
         add(content3.map { it.second.toString() })
