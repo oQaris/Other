@@ -1,0 +1,89 @@
+{
+  "name": "Дима Патока",
+  "type": "personal_chat",
+  "id": 178051894,
+  "messages": [
+    {
+      "id": 6364,
+      "type": "message",
+      "date": "2021-09-29T12:25:55",
+      "from": "o'Qaris",
+      "from_id": "user876213253",
+      "text": "ну так это для \"Расписания\"? 👀"
+    },
+    {
+      "id": 6366,
+      "type": "message",
+      "date": "2021-09-30T01:00:34",
+      "from": "Дима Патока",
+      "from_id": "user178051894",
+      "text": [
+        "У рыболова же на ",
+        {
+          "type": "link",
+          "text": "mail.ru"
+        },
+        " почта?"
+      ]
+    },
+    {
+      "id": 6367,
+      "type": "message",
+      "date": "2021-09-30T10:27:24",
+      "from": "o'Qaris",
+      "from_id": "user876213253",
+      "text": [
+        "Ага, ",
+        {
+          "type": "email",
+          "text": "alexander_rybalov@mail.ru"
+        },
+        ""
+      ]
+    },
+    {
+      "id": 44627,
+      "type": "service",
+      "date": "2021-11-30T11:53:11",
+      "actor": "o'Qaris",
+      "actor_id": "user876213253",
+      "action": "edit_chat_theme",
+      "emoticon": "💜",
+      "title": "Start The History",
+      "text": ""
+    },
+    {
+      "id": 109958,
+      "type": "message",
+      "date": "2022-03-28T13:32:45",
+      "from": "Дима Патока",
+      "from_id": "user178051894",
+      "file": "(File not included. Change data exporting settings to download.)",
+      "thumbnail": "(File not included. Change data exporting settings to download.)",
+      "mime_type": "image/png",
+      "width": 828,
+      "height": 304,
+      "text": "ну например"
+    },
+    {
+      "id": 110010,
+      "type": "message",
+      "date": "2022-03-28T15:48:09",
+      "from": "Дима Патока",
+      "from_id": "user178051894",
+      "photo": "(File not included. Change data exporting settings to download.)",
+      "width": 1280,
+      "height": 724,
+      "text": "красиво, конечно"
+    },
+    {
+      "id": 110034,
+      "type": "message",
+      "date": "2022-03-28T16:02:26",
+      "from": "o'Qaris",
+      "from_id": "user876213253",
+      "reply_to_message_id": 110032,
+      "text": "Во ++"
+    }
+  ]
+}
