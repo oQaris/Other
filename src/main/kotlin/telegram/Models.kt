@@ -2,17 +2,28 @@ package telegram
 
 import kotlinx.datetime.LocalDateTime
 
+data class Chat(
+    val id: Long,
+    val name: String,
+    val type: String,
+    val messages: List<Message>
+)
+
 data class Message(
     val id: Long,
     val type: String,
     val date: LocalDateTime,
     val from: String,
     val from_id: String,
+    val reply_to_message_id: Long? = null,
     val text: Text,
-    val media_type: String? = null,
-    val sticker_emoji: String? = null,
+
     val file: String? = null,
     val photo: String? = null,
+    val media_type: String? = null,
+    val sticker_emoji: String? = null,
+    val mime_type: String? = null,
+    val duration_seconds: Int? = null
 )
 
 data class Text(val parts: List<TextItem>) {
@@ -20,9 +31,11 @@ data class Text(val parts: List<TextItem>) {
     fun simpleText() = parts.joinToString("") { it.text }
 }
 
-data class TextItem(val text: String, val type: String)
+data class TextItem(val text: String, val type: String? = null)
 
-class Table(private val columns: MutableList<List<String>> = mutableListOf(), private val padding: Int = 1) :
+// Для вывода
+
+class Table(private val padding: Int = 1, private val columns: MutableList<List<String>> = mutableListOf()) :
     MutableList<List<String>> by columns {
 
     fun print() {

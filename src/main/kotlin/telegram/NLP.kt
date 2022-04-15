@@ -3,18 +3,28 @@ package telegram
 import com.github.demidko.aot.PartOfSpeech.*
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
 
-/**
- * Разделить по знаком препинания и белому пространству
- */
-fun String.tokens() = split("[\\p{P}\\p{Z}]".toRegex()).filter { it.isNotEmpty() }
+val setUrl = mutableSetOf<String>()
 
 /**
- * Оставить только слова из русских и английских букв, перевести в нижний регистр
+ * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
+ */
+fun String.tokens(): List<String> {
+    return split("[\\p{Z}]".toRegex()).flatMap {
+        if (!it.isURL())
+            it.split("[\\p{P}]".toRegex())
+        else listOf(it).apply { setUrl.add(it) }
+    }.filter { it.isNotEmpty() }
+}
+
+/**
+ * Оставить только слова из русских и английских букв, цифр и перевести в нижний регистр
  */
 fun Iterable<String>.words(): List<String> {
     return flatMap { part ->
-        part.split("[^A-Za-zА-Яа-яЁё]+".toRegex())
-            .map { it.lowercase() }
+        val buf =
+            part.split("[^0-9A-Za-zА-Яа-яЁё]+".toRegex())
+                .map { it.lowercase() }
+        buf
     }.filter { it.isNotEmpty() }
 }
 
@@ -46,10 +56,9 @@ fun Iterable<String>.lemmas() = map {
 }
 
 fun Iterable<String>.emoji(): List<String> {
-    val r1 = "[\\x{0001f300}-\\x{0001f64f}]|[\\x{0001f680}-\\x{0001f6ff}]".toRegex()
-    val r2 = "[\ud83c\udf00-\ud83d\ude4f]|[\ud83d\ude80-\ud83d\udeff]".toRegex()
-
+    val emojiRegexp = "[\\x{0001f300}-\\x{0001f64f}]|[\\x{0001f680}-\\x{0001f6ff}]".toRegex()
+    // val r2 = "[\ud83c\udf00-\ud83d\ude4f]|[\ud83d\ude80-\ud83d\udeff]".toRegex()
     return flatMap { part ->
-        r1.findAll(part).map { it.value }
+        emojiRegexp.findAll(part).map { it.value }
     }.filter { it.isNotEmpty() }
 }

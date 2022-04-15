@@ -1,8 +1,6 @@
 package telegram
 
 import com.github.demidko.aot.WordformMeaning
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.io.File
 import kotlin.time.Duration
@@ -14,43 +12,59 @@ const val topCount = 20
 fun main() {
 
     val parser = Parser(File(jsonPath))
-    val allMessages = parser.parseMessages()
+    val allMessages = parser.parseChat().messages
 
-    println("Популярные сообщения:")
-    val messageFrequency = allMessages.map { it.text.simpleText() }.sortedCounter()
-    val content = messageFrequency.take(topCount)
-    Table(padding = 5).apply {
-        add(content.map { it.first })
-        add(content.map { it.second.toString() })
-    }.print()
+    print("Уже общаются:  ")
+    val dist = distant(allMessages.last().date, allMessages.first().date)
+    println(dist)
+    print("Сообщений в день:  ")
+    println(allMessages.size / dist.inWholeDays)
     println()
 
-    println("Популярные слова:")
+    println("- Популярные сообщения:")
+    val content = allMessages.map { it.text.simpleText() }
+        .filter { it.isNotBlank() }
+        .sortedCounter()
+        .take(topCount)
+        .filter { it.second > 1 }
+    printTable {
+        add(content.map { it.first })
+        add(content.map { it.second.toString() })
+    }
+    println()
+
+    println("- Популярные слова:")
     printFrequency(allMessages, topCount)
     println()
 
-    println("Популярные слова по пользователям:")
-    allMessages.groupBy { it.from }.entries.forEach { (user, messages) ->
-        println(user)
-        printFrequency(messages, topCount)
-        println()
+    println("- Популярные слова по пользователям:")
+    printTable {
+        allMessages.groupBy { it.from }
+            .entries.forEach { (user, messages) ->
+                val freqByUser = wordsFrequency(messages).take(topCount)
+                addColumn(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+            }
     }
+    println()
 
-    println("Любимые смайлики:")
-    allMessages.groupBy { it.from }.entries.forEach { (user, messages) ->
-        println(user)
-        printFrequency(messages, topCount, ::emojiFrequency)
-        println()
+    println("- Любимые смайлики:")
+    printTable {
+        allMessages.groupBy { it.from }
+            .entries.forEach { (user, messages) ->
+                val freqByUser = emojiFrequency(messages).take(topCount)
+                addColumn(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+            }
     }
+    println()
 
     val userToMessages = allMessages.groupBy { it.from }
     val userToTextMessages = userToMessages.mapValues { (_, v) ->
         v.map { it.text.simpleText() }
     }
     val userToWords = userToMessages.mapValues { (_, v) ->
-        v.flatMap { it.text.simpleText().tokens().words() }
+        v.flatMap { it.text.simpleText().tokens() }
     }
-    Table(padding = 5).apply {
+    printTable {
         addColumn(
             "Имя пользователя",
             userToTextMessages.keys
@@ -74,6 +88,10 @@ fun main() {
             "Словарный запас",
             userToWords.mapValues { (_, v) -> v.toSet().size }.values
         )
+        addColumn(
+            "Число ответов",
+            userToMessages.mapValues { (_, v) -> v.count { it.reply_to_message_id != null } }.values
+        )
         val userToAnswerTimes =
             userToDurationAnswer(allMessages).groupBy { it.first }
                 .mapValues { times -> times.value.map { it.second } }
@@ -87,20 +105,28 @@ fun main() {
         )
         addColumn(
             "Avg время ответа",
-            userToAnswerTimes.values.map { times -> times.reduce { acc, dur -> acc + dur }.div(times.size) }
+            userToAnswerTimes.values.map { times -> times.reduce { acc, dur -> acc + dur } / times.size }
         )
         addColumn(
             "Mdn время ответа",
             userToAnswerTimes.values.map { times -> times.sorted()[times.size / 2] }
         )
-    }.print()
+    }
     println()
 
-    /*println(setRemWords.map {
-        try {
-            WordformMeaning.lookupForMeanings(it)[0].lemma
-        } catch (e: Exception) { it }
-    }.joinToString("\n"))*/
+    println("+ Удалённые слова:")
+    println(setRemWords.joinToString("\n"))
+    println()
+
+    println("+ Ссылки:")
+    println(setUrl.joinToString("\n"))
+    println()
+}
+
+fun printTable(content: Table.() -> Unit) {
+    Table(padding = 5).apply {
+        this.content()
+    }.print()
 }
 
 fun printInfoFromWord(word: String) {
@@ -119,7 +145,7 @@ fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> 
     messages.forEach { message ->
         val user = message.from
         if (prevUser != user) {
-            val period = message.date.toInstant(TimeZone.UTC) - prevTime.toInstant(TimeZone.UTC)
+            val period = distant(message.date, prevTime)
             add(user to period)
         }
         prevUser = user
