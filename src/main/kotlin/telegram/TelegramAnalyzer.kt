@@ -5,20 +5,35 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
+const val jsonPath = /*"data/chat.json"*/"C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
 const val topCount = 20
 
 @OptIn(ExperimentalSerializationApi::class)
 fun main() {
-
     val parser = Parser(File(jsonPath))
-    val allMessages = parser.parseChat().messages
+    val chat = parser.parseChat()
 
-    print("Уже общаются:  ")
-    val dist = distant(allMessages.last().date, allMessages.first().date)
-    println(dist)
+    println("${chat.name} - ${chat.type}\n")
+    val allMessages = chat.messages
+
+    print("Всего сообщений:  ")
+    println(allMessages.size)
+
+    print("Первое сообщение:  ")
+    val firstDate = allMessages.first().date
+    println(firstDate)
+
+    print("Длительность общения:  ")
+    val lastDate = allMessages.last().date
+    println(duration(firstDate, lastDate))
+
+    print("Дней общения:  ")
+    val dayWithMess = allMessages.map { it.date.date }.toSet().size
+    println(dayWithMess)
+
     print("Сообщений в день:  ")
-    println(allMessages.size / dist.inWholeDays)
+    println(allMessages.size / dayWithMess)
+
     println()
 
     println("- Популярные сообщения:")
@@ -27,7 +42,7 @@ fun main() {
         .sortedCounter()
         .take(topCount)
         .filter { it.second > 1 }
-    printTable {
+    printTableByColumns {
         add(content.map { it.first })
         add(content.map { it.second.toString() })
     }
@@ -38,21 +53,21 @@ fun main() {
     println()
 
     println("- Популярные слова по пользователям:")
-    printTable {
+    printTableByColumns {
         allMessages.groupBy { it.from }
             .entries.forEach { (user, messages) ->
                 val freqByUser = wordsFrequency(messages).take(topCount)
-                addColumn(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+                add(user, freqByUser.map { (w, c) -> "$w  ($c)" })
             }
     }
     println()
 
     println("- Любимые смайлики:")
-    printTable {
+    printTableByColumns {
         allMessages.groupBy { it.from }
             .entries.forEach { (user, messages) ->
                 val freqByUser = emojiFrequency(messages).take(topCount)
-                addColumn(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+                add(user, freqByUser.map { (w, c) -> "$w  ($c)" })
             }
     }
     println()
@@ -64,55 +79,57 @@ fun main() {
     val userToWords = userToMessages.mapValues { (_, v) ->
         v.flatMap { it.text.simpleText().tokens() }
     }
-    printTable {
-        addColumn(
+    printTableByColumns {
+        add(
             "Имя пользователя",
             userToTextMessages.keys
         )
-        addColumn(
+        add(
             "Кол-во сообщений",
             userToTextMessages.map { (_, v) -> v.size }
         )
         val userToWordsCount = userToWords.mapValues { (_, v) -> v.size }
-        addColumn(
+        add(
             "Количество слов",
             userToWordsCount.values
         )
-        addColumn(
+        add(
             "Слов в сообщении".replaceFirstChar { it.uppercase() },
             userToWordsCount.entries.map { (k, v) ->
                 "%.3f".format(v.toDouble() / userToTextMessages[k]!!.size)
             }
         )
-        addColumn(
+        add(
             "Словарный запас",
             userToWords.mapValues { (_, v) -> v.toSet().size }.values
         )
-        addColumn(
+        add(
             "Число ответов",
             userToMessages.mapValues { (_, v) -> v.count { it.reply_to_message_id != null } }.values
         )
         val userToAnswerTimes =
             userToDurationAnswer(allMessages).groupBy { it.first }
                 .mapValues { times -> times.value.map { it.second } }
-        addColumn(
+        add(
             "Max время ответа",
             userToAnswerTimes.values.map { times -> times.maxOf { it } }
         )
-        addColumn(
+        add(
             "Min время ответа",
             userToAnswerTimes.values.map { times -> times.minOf { it } }
         )
-        addColumn(
+        add(
             "Avg время ответа",
             userToAnswerTimes.values.map { times -> times.reduce { acc, dur -> acc + dur } / times.size }
         )
-        addColumn(
+        add(
             "Mdn время ответа",
             userToAnswerTimes.values.map { times -> times.sorted()[times.size / 2] }
         )
     }
     println()
+
+    // Отладка
 
     println("+ Удалённые слова:")
     println(setRemWords.joinToString("\n"))
@@ -121,22 +138,27 @@ fun main() {
     println("+ Ссылки:")
     println(setUrl.joinToString("\n"))
     println()
+
+    printInfoFromWord("я")
+    printInfoFromWord("меня")
 }
 
-fun printTable(content: Table.() -> Unit) {
-    Table(padding = 5).apply {
-        this.content()
-    }.print()
+fun printTableByRows(content: Table.Builder.Appender.() -> Unit) {
+    Table.withRows(padding = 5, append = content).print()
+}
+
+fun printTableByColumns(content: Table.Builder.Appender.() -> Unit) {
+    Table.withColumns(padding = 5, append = content).print()
 }
 
 fun printInfoFromWord(word: String) {
-    val means = WordformMeaning.lookupForMeanings(word)
-    print("$word ")
-    if (means.isNotEmpty()) {
-        val mean = means[0]
-        print("${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
-    } else print("None")
-    println()
+    println(word)
+    var flag = false
+    WordformMeaning.lookupForMeanings(word).forEach { mean ->
+        println("\t${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
+        flag = true
+    }
+    if (!flag) println("None")
 }
 
 fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> = buildList {
@@ -145,7 +167,7 @@ fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> 
     messages.forEach { message ->
         val user = message.from
         if (prevUser != user) {
-            val period = distant(message.date, prevTime)
+            val period = duration(message.date, prevTime)
             add(user to period)
         }
         prevUser = user
@@ -159,9 +181,9 @@ fun printFrequency(
     frequency: (List<Message>) -> List<Pair<String, Int>> = ::wordsFrequency
 ) {
     val freqByUser = frequency(messages)
-    val content3 = freqByUser.take(limit)
-    Table(padding = 5).apply {
-        add(content3.map { it.first })
-        add(content3.map { it.second.toString() })
-    }.print()
+    val content = freqByUser.take(limit)
+    printTableByColumns {
+        add(content.map { it.first })
+        add(content.map { it.second.toString() })
+    }
 }

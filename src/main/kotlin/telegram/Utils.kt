@@ -1,9 +1,8 @@
 package telegram
 
 import com.github.demidko.aot.WordformMeaning
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
+import com.vdurmont.emoji.EmojiParser
+import kotlinx.datetime.*
 import java.net.MalformedURLException
 import java.net.URL
 import kotlin.time.Duration
@@ -24,20 +23,22 @@ fun toLemma(str: String): String {
 
 fun wordsFrequency(mess: List<Message>) = mess.flatMap {
     val start = it.text.simpleText().tokens()
-    val end = start.removeAuxiliaryPartsOfSpeech()
+    val end = start.removeSparePartsOfSpeech()
+    //log
     setRemWords.addAll(start.minus(end.toSet()).map { m -> toLemma(m) })
     end.lemmas()
 }.sortedCounter()
 
 fun emojiFrequency(mess: List<Message>) = mess.flatMap {
-    it.text.simpleText().tokens().emoji()
+    EmojiParser.extractEmojis(it.text.simpleText())
 }.sortedCounter()
 
-
-fun distant(date1: LocalDateTime, date2: LocalDateTime): Duration {
+fun duration(date1: LocalDateTime, date2: LocalDateTime): Duration {
     val maxToMin = if (date1 > date2) date1 to date2 else date2 to date1
     return maxToMin.first.toInstant(TimeZone.UTC) - maxToMin.second.toInstant(TimeZone.UTC)
 }
+
+fun nowDate() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
 fun String.isURL() = try {
     URL(this); true

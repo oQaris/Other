@@ -9,10 +9,11 @@ val setUrl = mutableSetOf<String>()
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
  */
 fun String.tokens(): List<String> {
-    return split("[\\p{Z}]".toRegex()).flatMap {
-        if (!it.isURL())
-            it.split("[\\p{P}]".toRegex())
-        else listOf(it).apply { setUrl.add(it) }
+    return split("[\\p{Z}]".toRegex()).flatMap { part ->
+        if (part.isURL())
+            listOf(part).apply { setUrl.add(part) }
+        else part.split("[\\p{P}]".toRegex())
+            .map { it.lowercase() }
     }.filter { it.isNotEmpty() }
 }
 
@@ -29,19 +30,20 @@ fun Iterable<String>.words(): List<String> {
 }
 
 /**
- * Удалить служебные части речи. Если [minLenWord] не null, то удалить слова короче  [minLenWord]
+ * Удалить служебные части речи.
+ * Вне зависимости от части речи:
+ * Если [removeShorter] не null, то удалить слова короче [removeShorter]
+ * Если [saveLonger] не null, то оставить слова длинее [saveLonger]
  */
-fun Iterable<String>.removeAuxiliaryPartsOfSpeech(minLenWord: Int? = null): List<String> {
-    //TODO Добавить soft удаление
-    return filter {
-        if (it.length < (minLenWord ?: 0)) return@filter false
-
-        val mean = lookupForMeanings(it)
-        if (mean.isNotEmpty())
-            when (mean[0].partOfSpeech) {
-                Particle, Pretext, Union, Pronoun, PronounAdjective, Interjection, Adverb -> false
-                else -> true
-            } else true
+fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 3): List<String> {
+    val auxiliaryPartsOfSpeech = listOf(Particle, Pretext, Union, Pronoun /*PronounAdjective, Interjection*/)
+    return filterNot {
+        if (it.length < (removeShorter ?: 0)) return@filterNot true
+        if (it.length > (saveLonger ?: Int.MAX_VALUE)) return@filterNot false
+        // если true, то удаляем
+        lookupForMeanings(it).any { mean ->
+            mean.partOfSpeech in auxiliaryPartsOfSpeech
+        }
     }
 }
 
@@ -53,12 +55,4 @@ fun Iterable<String>.lemmas() = map {
         if (size > 0) get(0).lemma.toString()
         else it // если нет в словаре
     }
-}
-
-fun Iterable<String>.emoji(): List<String> {
-    val emojiRegexp = "[\\x{0001f300}-\\x{0001f64f}]|[\\x{0001f680}-\\x{0001f6ff}]".toRegex()
-    // val r2 = "[\ud83c\udf00-\ud83d\ude4f]|[\ud83d\ude80-\ud83d\udeff]".toRegex()
-    return flatMap { part ->
-        emojiRegexp.findAll(part).map { it.value }
-    }.filter { it.isNotEmpty() }
 }

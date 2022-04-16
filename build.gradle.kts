@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
@@ -20,6 +18,7 @@ dependencies {
     implementation("com.github.shiguruikai:combinatoricskt:1.6.0")
     // NLP
     implementation("com.github.demidko:aot:2021.11.17")
+    implementation("com.vdurmont:emoji-java:5.1.1")
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.14.3")
@@ -40,7 +39,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.withType<KotlinCompile> {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
