@@ -35,15 +35,14 @@ fun Iterable<String>.words(): List<String> {
  * Если [removeShorter] не null, то удалить слова короче [removeShorter]
  * Если [saveLonger] не null, то оставить слова длинее [saveLonger]
  */
-fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 3): List<String> {
+fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 4): List<String> {
     val auxiliaryPartsOfSpeech = listOf(Particle, Pretext, Union, Pronoun /*PronounAdjective, Interjection*/)
-    return filterNot {
-        if (it.length < (removeShorter ?: 0)) return@filterNot true
-        if (it.length > (saveLonger ?: Int.MAX_VALUE)) return@filterNot false
-        // если true, то удаляем
-        lookupForMeanings(it).any { mean ->
-            mean.partOfSpeech in auxiliaryPartsOfSpeech
-        }
+    return filterNot { word ->
+        val means = lookupForMeanings(word)
+        // если все условия true, то удаляем
+        // means.all { it.toString().length < (removeShorter ?: Int.MAX_VALUE) } &&
+        means.all { mean -> mean.transformations.all { it.toString().length <= (saveLonger ?: 0) } } &&
+                means.any { it.partOfSpeech in auxiliaryPartsOfSpeech }
     }
 }
 

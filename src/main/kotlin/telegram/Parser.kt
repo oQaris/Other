@@ -29,6 +29,8 @@ class Parser(file: File) {
         photo = json.getContent("photo"),
         media_type = json.getContent("media_type"),
         sticker_emoji = json.getContent("sticker_emoji"),
+        mime_type = json.getContent("mime_type"),
+        duration_seconds = json.getContent("duration_seconds")?.toInt(),
     )
 
     private fun getTextMessage(json: JsonElement): Text {
