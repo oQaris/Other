@@ -30,6 +30,12 @@ internal class ParserTest {
                     Text(listOf(TextItem("Ага, "), TextItem("alexander_rybalov@mail.ru", "email"), TextItem("")))
                 ),
                 Message(
+                    18894, "message", LocalDateTime.parse("2021-11-10T02:43:47"),
+                    "Милка ❤", "user983918040", null,
+                    Text(listOf(TextItem(""))), "(File not included. Change data exporting settings to download.)",
+                    null, "voice_message", null, "audio/ogg", 148
+                ),
+                Message(
                     44627, "service", LocalDateTime.parse("2021-11-30T11:53:11"),
                     "System", "System", null,
                     Text(listOf(TextItem("")))

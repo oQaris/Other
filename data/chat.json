@@ -42,6 +42,18 @@
       ]
     },
     {
+      "id": 18894,
+      "type": "message",
+      "date": "2021-11-10T02:43:47",
+      "from": "Милка ❤",
+      "from_id": "user983918040",
+      "file": "(File not included. Change data exporting settings to download.)",
+      "media_type": "voice_message",
+      "mime_type": "audio/ogg",
+      "duration_seconds": 148,
+      "text": ""
+    },
+    {
       "id": 44627,
       "type": "service",
       "date": "2021-11-30T11:53:11",
