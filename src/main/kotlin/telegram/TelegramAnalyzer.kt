@@ -2,13 +2,14 @@ package telegram
 
 import com.github.demidko.aot.WordformMeaning
 import kotlinx.serialization.ExperimentalSerializationApi
+import telegram.Table.Builder.ColumnsAppender
 import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
-const val topCount = 20
+const val jsonPath = /*"C:/Users/oQaris/Desktop/vk.txt"*/ "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
+const val topCount = 10
 
-val chat = Parser(File(jsonPath)).parseChat()
+val chat = TgParser(File(jsonPath)).parseChat()
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
 
 fun generalInfo() {
@@ -70,7 +71,7 @@ fun userSummary() {
     println()
 }
 
-fun tableWordsAndReply() {
+fun tableWords() {
     val userToTextMessages = userToMessages.mapValues { (_, v) ->
         v.map { it.text.simpleText() }
     }.sortAndCheck(userToMessages.size)
@@ -97,7 +98,7 @@ fun tableWordsAndReply() {
             userToWordsCount.values
         )
         add(
-            "Слов в сообщении".replaceFirstChar { it.uppercase() },
+            "Слов в сообщении",
             userToWordsCount.entries.map { (k, v) ->
                 "%.3f".format(v.toDouble() / userToTextMessages[k]!!.size)
             }
@@ -106,11 +107,25 @@ fun tableWordsAndReply() {
             "Словарный запас",
             userToWords.mapValues { (_, v) -> v.toSet().size }.values
         )
-        // Ответы
+    }
+    println()
+}
+
+fun tableReply() {
+    printTableByColumns {
+        add(
+            "Имя пользователя",
+            userToMessages.keys
+        )
+        add(
+            "Пересланных сообщений",
+            userToMessages.mapValues { (_, v) -> v.count { it.isForwarded } }.values
+        )
         add(
             "Число ответов",
-            userToMessages.mapValues { (_, v) -> v.count { it.reply_to_message_id != null } }.values
+            userToMessages.mapValues { (_, v) -> v.count { it.replyTo != null } }.values
         )
+        // Ответы
         val userToAnswerTimes =
             userToDurationAnswer(chat.messages)
                 .groupBy { it.first }
@@ -138,10 +153,10 @@ fun tableWordsAndReply() {
 
 fun tableVoiceMessages() {
     val userToDurationVoiceMessages = userToMessages
-        .mapValues { m ->
-            m.value
-                .filter { it.media_type == "voice_message" }
-                .map { it.duration_seconds!! }
+        .mapValues { entry ->
+            entry.value
+                .filter { m -> m.attachments.any { it.type == MediaType.VoiceMessage } }
+                .map { it.durationSeconds!! }
         }
         .sortAndCheck(userToMessages.size)
 
@@ -187,8 +202,8 @@ fun tableVoiceMessages() {
 
 fun tableMediaType() {
     val userToMediaTypeWithFrequency = userToMessages
-        .mapValues { m ->
-            m.value.map { it.media_type ?: "none" }.sortedCounter()
+        .mapValues { entry ->
+            entry.value.flatMap { m -> m.attachments.map { it.type } }.sortedCounter()
         }
         .sortAndCheck(userToMessages.size)
 
@@ -205,13 +220,14 @@ fun main() {
 
     generalInfo()
     userSummary()
-    tableWordsAndReply()
+    tableWords()
+    tableReply()
     tableVoiceMessages()
     tableMediaType()
 
-// Отладка
+    // Отладка
 
-    /*println("+ Удалённые слова:")
+    println("+ Удалённые слова:")
     println(setRemWords.joinToString("\n"))
     println()
 
@@ -219,19 +235,15 @@ fun main() {
     println(setUrl.joinToString("\n"))
     println()
 
-    printInfoFromWord("я")
-    printInfoFromWord("меня")*/
+    printInfoFromWord("это")
+    printInfoFromWord("для")
 }
 
 fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
     this.toSortedMap().apply { require(size == reqSize) }
 
-fun printTableByRows(content: Table.Builder.Appender.() -> Unit) {
-    Table.withRows(padding = 5, append = content).print()
-}
-
 fun printTableByColumns(content: Table.Builder.Appender.() -> Unit) {
-    Table.withColumns(padding = 5, append = content).print()
+    Table.with(padding = 5, appender = ::ColumnsAppender, append = content).print()
 }
 
 fun printInfoFromWord(word: String) {
