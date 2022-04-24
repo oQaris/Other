@@ -7,7 +7,7 @@ class Table private constructor(
 
     fun print() = println(formattedRows().joinToString("\n"))
 
-    private fun formattedRows() = buildList {
+    fun formattedRows() = buildList {
         if (columns.isEmpty() || columns.all { it.isEmpty() }) return@buildList
         val widths = columns.map { col -> col.maxOf { it.length } }
         val height = columns.maxOf { it.size }
@@ -22,7 +22,7 @@ class Table private constructor(
     }
 
     companion object Builder {
-        private val columns = mutableListOf<MutableList<String>>()
+        //private val columns = mutableListOf<MutableList<String>>()
 
         abstract class Appender(val columns: MutableList<MutableList<String>>) {
             abstract fun add(data: Iterable<Any>)
@@ -45,17 +45,27 @@ class Table private constructor(
             }
         }
 
-        fun withRows(padding: Int, append: Appender.() -> Unit) =
+        /*fun withRows(padding: Int, append: Appender.() -> Unit) =
             buildTable(padding, RowsAppender(columns), append)
 
         fun withColumns(padding: Int, append: Appender.() -> Unit) =
-            buildTable(padding, ColumnsAppender(columns), append)
+            buildTable(padding, ColumnsAppender(columns), append)*/
 
-        fun with(padding: Int, appender: (MutableList<MutableList<String>>) -> Appender, append: Appender.() -> Unit) =
-            buildTable(padding, appender.invoke(columns), append)
+        fun with(
+            padding: Int,
+            appender: (MutableList<MutableList<String>>) -> Appender,
+            append: Appender.() -> Unit
+        ): Table {
+            val columns = mutableListOf<MutableList<String>>()
+            return buildTable(padding, columns, appender.invoke(columns), append)
+        }
 
-        private fun buildTable(padding: Int, appender: Appender, append: Appender.() -> Unit): Table {
-            columns.clear() //todo костыль
+        private fun buildTable(
+            padding: Int,
+            columns: List<List<String>>,
+            appender: Appender,
+            append: Appender.() -> Unit
+        ): Table {
             appender.append()
             return Table(padding, columns)
         }

@@ -21,13 +21,22 @@ fun toLemma(str: String): String {
     }
 }
 
-fun wordsFrequency(mess: List<Message>) = mess.flatMap {
-    val start = it.text.simpleText().tokens()
-    val end = start.removeSparePartsOfSpeech()
-    //log
-    setRemWords.addAll(start.minus(end.toSet()).map { m -> toLemma(m) })
-    end.lemmas()
-}.sortedCounter()
+fun wordsFrequency(mess: List<Message>): List<WordsFrequency> {
+    val wordToLemma = mess.flatMap {
+        val start = it.text.simpleText().tokens()
+        val end = start.removeSparePartsOfSpeech()
+        //log
+        setRemWords.addAll(start.minus(end.toSet()).map { m -> toLemma(m) })
+        end.zip(end.lemmas())
+    }
+    return wordToLemma.map { it.second }.sortedCounter().map { (lem, cnt) ->
+        val src = wordToLemma.filter { it.second == lem }
+            .map { it.first }.sortedCounter().first().first
+        WordsFrequency(lem, cnt, if (src != lem) "~$src" else "")
+    }
+}
+
+data class WordsFrequency(val lemma: String, val count: Int, val src: String)
 
 fun emojiFrequency(mess: List<Message>) = mess.flatMap {
     EmojiParser.extractEmojis(it.text.simpleText())

@@ -3,11 +3,12 @@ package telegram
 import com.github.demidko.aot.WordformMeaning
 import kotlinx.serialization.ExperimentalSerializationApi
 import telegram.Table.Builder.ColumnsAppender
+import telegram.Table.Builder.RowsAppender
 import java.io.File
 import kotlin.time.Duration
 
 const val jsonPath = /*"C:/Users/oQaris/Desktop/vk.txt"*/ "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
-const val topCount = 10
+const val topCount = 50
 
 val chat = TgParser(File(jsonPath)).parseChat()
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
@@ -56,7 +57,7 @@ fun userSummary() {
     printTableByColumns {
         userToMessages.entries.forEach { (user, messages) ->
             val freqByUser = wordsFrequency(messages).take(topCount)
-            add(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+            add(user, buildTableByRows(freqByUser).formattedRows())
         }
     }
     println()
@@ -226,17 +227,16 @@ fun main() {
     tableMediaType()
 
     // Отладка
-
     println("+ Удалённые слова:")
     println(setRemWords.joinToString("\n"))
     println()
 
-    println("+ Ссылки:")
-    println(setUrl.joinToString("\n"))
-    println()
-
-    printInfoFromWord("это")
-    printInfoFromWord("для")
+    printInfoFromWord("остальное")
+    printInfoFromWord("достаточно")
+    printInfoFromWord("ладно")
+    printInfoFromWord("неплохо")
+    printInfoFromWord("сложно")
+    printInfoFromWord("тута")
 }
 
 fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
@@ -246,6 +246,11 @@ fun printTableByColumns(content: Table.Builder.Appender.() -> Unit) {
     Table.with(padding = 5, appender = ::ColumnsAppender, append = content).print()
 }
 
+fun buildTableByRows(freqByUser: List<WordsFrequency>) =
+    Table.with(padding = 1, appender = ::RowsAppender, append = {
+        freqByUser.forEach { add(listOf(it.lemma, it.count, it.src)) }
+    })
+
 fun printInfoFromWord(word: String) {
     println(word)
     var flag = false
@@ -253,7 +258,7 @@ fun printInfoFromWord(word: String) {
         println("\t${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
         flag = true
     }
-    if (!flag) println("None")
+    if (!flag) println("\tNone")
 }
 
 fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> = buildList {
@@ -273,12 +278,13 @@ fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> 
 fun printFrequency(
     messages: List<Message>,
     limit: Int,
-    frequency: (List<Message>) -> List<Pair<String, Int>> = ::wordsFrequency
+    frequency: (List<Message>) -> List<WordsFrequency> = ::wordsFrequency
 ) {
     val freqByUser = frequency(messages)
     val content = freqByUser.take(limit)
     printTableByColumns {
-        add(content.map { it.first })
-        add(content.map { it.second.toString() })
+        add(content.map { it.lemma })
+        add(content.map { it.count.toString() })
+        add(content.map { it.src })
     }
 }

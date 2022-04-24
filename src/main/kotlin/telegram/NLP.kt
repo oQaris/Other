@@ -1,6 +1,6 @@
 package telegram
 
-import com.github.demidko.aot.PartOfSpeech.*
+import com.github.demidko.aot.PartOfSpeech
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
 
 val setUrl = mutableSetOf<String>()
@@ -9,10 +9,10 @@ val setUrl = mutableSetOf<String>()
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
  */
 fun String.tokens(): List<String> {
-    return split("[\\p{Z}]".toRegex()).flatMap { part ->
+    return split("\\p{Space}".toRegex()).flatMap { part ->
         if (part.isURL())
             listOf(part).apply { setUrl.add(part) }
-        else part.split("[\\p{P}]".toRegex())
+        else part.split("\\p{P}".toRegex())
             .map { it.lowercase() }
     }.filter { it.isNotEmpty() }
 }
@@ -32,17 +32,22 @@ fun Iterable<String>.words(): List<String> {
 /**
  * Удалить служебные части речи.
  * Вне зависимости от части речи:
- * Если [removeShorter] не null, то удалить слова короче [removeShorter]
- * Если [saveLonger] не null, то оставить слова длинее [saveLonger]
+ * Если [removeShorter] не null, то удалить слова, все леммы которого короче [removeShorter].
+ * Если [saveLonger] не null, то оставить слова, хотя бы одна леммы которого длинее [saveLonger]
  */
-fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 4): List<String> {
-    val auxiliaryPartsOfSpeech = listOf(Particle, Pretext, Union, Pronoun /*PronounAdjective, Interjection*/)
+fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = null): List<String> {
+    val auxiliaryPartsOfSpeech =
+        setOf<PartOfSpeech>(/*Pretext, Particle, Union, Pronoun, PronounAdjective, Interjection, Predicative*/)
     return filterNot { word ->
         val means = lookupForMeanings(word)
-        // если все условия true, то удаляем
-        // means.all { it.toString().length < (removeShorter ?: Int.MAX_VALUE) } &&
-        means.all { mean -> mean.transformations.all { it.toString().length <= (saveLonger ?: 0) } } &&
-                means.any { it.partOfSpeech in auxiliaryPartsOfSpeech }
+        if (means.isEmpty()) return@filterNot false
+        val lemmas = means.map { it.lemma.toString() }
+        // если true, то удаляем
+        if (lemmas.any { it.length > (saveLonger ?: Int.MAX_VALUE) })
+            return@filterNot false
+        if (lemmas.all { it.length < (removeShorter ?: 0) })
+            return@filterNot true
+        means.any { it.partOfSpeech in auxiliaryPartsOfSpeech }
     }
 }
 
