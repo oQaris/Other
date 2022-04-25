@@ -9,7 +9,8 @@ import kotlin.time.Duration
 
 val setRemWords = mutableSetOf<String>()
 
-fun <T> Iterable<T>.sortedCounter() = groupingBy { it }.eachCount().toList().sortedBy { (_, count) -> -count }
+fun <T> Iterable<T>.sortedCounter(grouping: (T) -> T = { it }) =
+    groupingBy(grouping).eachCount().toList().sortedBy { (_, count) -> -count }
 
 fun <K, V> Iterable<Pair<K, V>>.tableStr(n: Int = 20) = take(n).joinToString("\n") { (k, v) -> "$k\t\t$v" }
 
@@ -30,13 +31,21 @@ fun wordsFrequency(mess: List<Message>): List<WordsFrequency> {
         end.zip(end.lemmas())
     }
     return wordToLemma.map { it.second }.sortedCounter().map { (lem, cnt) ->
-        val src = wordToLemma.filter { it.second == lem }
-            .map { it.first }.sortedCounter().first().first
-        WordsFrequency(lem, cnt, if (src != lem) "~$src" else "")
+        val srcWords = wordToLemma
+            .filter { it.second == lem }
+            .map { it.first }.toSet()
+        val maxSrcWords = srcWords
+            .sortedCounter().run {
+                takeWhile { it.second == this.first().second }
+            }.map { it.first }
+        if (srcWords.size == 1) WordsFrequency(srcWords.first(), cnt, "")
+        else WordsFrequency(lem, cnt, maxSrcWords.firstOrNull { it != lem } ?: "")
     }
 }
 
-data class WordsFrequency(val lemma: String, val count: Int, val src: String)
+data class WordsFrequency(val lemma: String, val count: Int, val original: String) {
+    fun formatOrig() = if (original.isEmpty()) "" else "~$original"
+}
 
 fun emojiFrequency(mess: List<Message>) = mess.flatMap {
     EmojiParser.extractEmojis(it.text.simpleText())

@@ -1,7 +1,6 @@
 package telegram
 
 import com.github.demidko.aot.WordformMeaning
-import kotlinx.serialization.ExperimentalSerializationApi
 import telegram.Table.Builder.ColumnsAppender
 import telegram.Table.Builder.RowsAppender
 import java.io.File
@@ -47,11 +46,9 @@ fun userSummary() {
         add(content.map { it.first })
         add(content.map { it.second.toString() })
     }
-    println()
 
     println("- Популярные слова:")
     printFrequency(chat.messages, topCount)
-    println()
 
     println("- Популярные слова по пользователям:")
     printTableByColumns {
@@ -60,16 +57,14 @@ fun userSummary() {
             add(user, buildTableByRows(freqByUser).formattedRows())
         }
     }
-    println()
 
     println("- Любимые смайлики:")
     printTableByColumns {
         userToMessages.entries.forEach { (user, messages) ->
             val freqByUser = emojiFrequency(messages).take(topCount)
-            add(user, freqByUser.map { (w, c) -> "$w  ($c)" })
+            add(user, buildTableByRows(freqByUser).formattedRows())
         }
     }
-    println()
 }
 
 fun tableWords() {
@@ -109,7 +104,6 @@ fun tableWords() {
             userToWords.mapValues { (_, v) -> v.toSet().size }.values
         )
     }
-    println()
 }
 
 fun tableReply() {
@@ -149,7 +143,6 @@ fun tableReply() {
             userToAnswerTimes.values.map { times -> times.sorted()[times.size / 2] }
         )
     }
-    println()
 }
 
 fun tableVoiceMessages() {
@@ -198,7 +191,6 @@ fun tableVoiceMessages() {
             }
         )
     }
-    println()
 }
 
 fun tableMediaType() {
@@ -210,13 +202,11 @@ fun tableMediaType() {
 
     printTableByColumns {
         userToMediaTypeWithFrequency.forEach { (user, typeToCount) ->
-            add(user, typeToCount.map { (t, c) -> "$t  ($c)" })
+            add(user, buildTableByRows(typeToCount).formattedRows())
         }
     }
-    println()
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 fun main() {
 
     generalInfo()
@@ -231,12 +221,12 @@ fun main() {
     println(setRemWords.joinToString("\n"))
     println()
 
-    printInfoFromWord("остальное")
-    printInfoFromWord("достаточно")
-    printInfoFromWord("ладно")
-    printInfoFromWord("неплохо")
-    printInfoFromWord("сложно")
-    printInfoFromWord("тута")
+    printInfoFromWord("ага")
+    printInfoFromWord("что")
+    printInfoFromWord("любой")
+    printInfoFromWord("минус")
+    printInfoFromWord("немой")
+    printInfoFromWord("посол")
 }
 
 fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
@@ -244,11 +234,18 @@ fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
 
 fun printTableByColumns(content: Table.Builder.Appender.() -> Unit) {
     Table.with(padding = 5, appender = ::ColumnsAppender, append = content).print()
+    println()
 }
 
 fun buildTableByRows(freqByUser: List<WordsFrequency>) =
     Table.with(padding = 1, appender = ::RowsAppender, append = {
-        freqByUser.forEach { add(listOf(it.lemma, it.count, it.src)) }
+        freqByUser.forEach { add(listOf(it.lemma, it.count, it.formatOrig())) }
+    })
+
+@JvmName("buildTableByRows1")
+fun buildTableByRows(freqByUser: List<Pair<Any, Int>>) =
+    Table.with(padding = 1, appender = ::RowsAppender, append = {
+        freqByUser.forEach { add(listOf(it.first, it.second)) }
     })
 
 fun printInfoFromWord(word: String) {
@@ -285,6 +282,7 @@ fun printFrequency(
     printTableByColumns {
         add(content.map { it.lemma })
         add(content.map { it.count.toString() })
-        add(content.map { it.src })
+        add(content.map { it.formatOrig() })
     }
+    println()
 }

@@ -1,17 +1,15 @@
 package telegram
 
 import com.github.demidko.aot.PartOfSpeech
+import com.github.demidko.aot.PartOfSpeech.*
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
-
-val setUrl = mutableSetOf<String>()
 
 /**
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
  */
 fun String.tokens(): List<String> {
     return split("\\p{Space}".toRegex()).flatMap { part ->
-        if (part.isURL())
-            listOf(part).apply { setUrl.add(part) }
+        if (part.isURL()) listOf(part)
         else part.split("\\p{P}".toRegex())
             .map { it.lowercase() }
     }.filter { it.isNotEmpty() }
@@ -33,15 +31,16 @@ fun Iterable<String>.words(): List<String> {
  * Удалить служебные части речи.
  * Вне зависимости от части речи:
  * Если [removeShorter] не null, то удалить слова, все леммы которого короче [removeShorter].
- * Если [saveLonger] не null, то оставить слова, хотя бы одна леммы которого длинее [saveLonger]
+ * Если [saveLonger] не null, то оставить слова, хотя бы одна леммы которого длиннее [saveLonger]
  */
-fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = null): List<String> {
+fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 5): List<String> {
     val auxiliaryPartsOfSpeech =
-        setOf<PartOfSpeech>(/*Pretext, Particle, Union, Pronoun, PronounAdjective, Interjection, Predicative*/)
+        setOf<PartOfSpeech>(Pretext, Particle, Union, Pronoun, PronounAdjective/* Interjection, Predicative*/)
     return filterNot { word ->
         val means = lookupForMeanings(word)
-        if (means.isEmpty()) return@filterNot false
-        val lemmas = means.map { it.lemma.toString() }
+        val lemmas = //todo заменить на .lemmas() ?
+            if (means.isEmpty()) listOf(word)
+            else means.map { it.lemma.toString() }
         // если true, то удаляем
         if (lemmas.any { it.length > (saveLonger ?: Int.MAX_VALUE) })
             return@filterNot false
@@ -54,9 +53,15 @@ fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLo
 /**
  * Привести слов из словаря к нормальной форме (первого лица, единственного числа)
  */
-fun Iterable<String>.lemmas() = map {
-    lookupForMeanings(it).run {
-        if (size > 0) get(0).lemma.toString()
-        else it // если нет в словаре
-    }
+fun Iterable<String>.lemmas() = map { word ->
+    word.lemmas().minByOrNull { it.length }!!
+}
+
+/**
+ * Возвращает список нормальных форм слова
+ */
+fun String.lemmas(): List<String> {
+    val means = lookupForMeanings(this)
+    return if (means.isEmpty()) listOf(this)
+    else means.map { it.lemma.toString() }
 }

@@ -22,7 +22,6 @@ class Table private constructor(
     }
 
     companion object Builder {
-        //private val columns = mutableListOf<MutableList<String>>()
 
         abstract class Appender(val columns: MutableList<MutableList<String>>) {
             abstract fun add(data: Iterable<Any>)
@@ -44,12 +43,6 @@ class Table private constructor(
                 columns.add(data.map { it.toString() }.toMutableList())
             }
         }
-
-        /*fun withRows(padding: Int, append: Appender.() -> Unit) =
-            buildTable(padding, RowsAppender(columns), append)
-
-        fun withColumns(padding: Int, append: Appender.() -> Unit) =
-            buildTable(padding, ColumnsAppender(columns), append)*/
 
         fun with(
             padding: Int,
