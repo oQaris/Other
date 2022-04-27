@@ -51,17 +51,17 @@ fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLo
 }
 
 /**
- * Привести слов из словаря к нормальной форме (первого лица, единственного числа)
- */
-fun Iterable<String>.lemmas() = map { word ->
-    word.lemmas().minByOrNull { it.length }!!
-}
-
-/**
- * Возвращает список нормальных форм слова
+ * Возвращает список нормальных форм слова (первого лица, единственного числа)
  */
 fun String.lemmas(): List<String> {
     val means = lookupForMeanings(this)
     return if (means.isEmpty()) listOf(this)
     else means.map { it.lemma.toString() }
 }
+
+/**
+ * Возвращает одну нормальную форму слова (короткую из часто встречающихся)
+ */
+fun String.lemma() = this.lemmas()
+    .maxsByCount()
+    .minByOrNull { it.length }!!

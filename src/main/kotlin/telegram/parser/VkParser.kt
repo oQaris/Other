@@ -1,9 +1,10 @@
-package telegram
+package telegram.parser
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.*
+import telegram.*
 import java.io.File
 
 class VkParser(file: File) : Parser(file) {

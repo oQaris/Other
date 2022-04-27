@@ -1,7 +1,8 @@
-package telegram
+package telegram.parser
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.*
+import telegram.*
 import java.io.File
 
 class TgParser(file: File) : Parser(file) {

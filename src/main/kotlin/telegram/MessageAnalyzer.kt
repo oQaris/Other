@@ -3,6 +3,7 @@ package telegram
 import com.github.demidko.aot.WordformMeaning
 import telegram.Table.Builder.ColumnsAppender
 import telegram.Table.Builder.RowsAppender
+import telegram.parser.TgParser
 import java.io.File
 import kotlin.time.Duration
 
