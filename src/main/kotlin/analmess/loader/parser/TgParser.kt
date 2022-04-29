@@ -1,8 +1,8 @@
-package telegram.parser
+package analmess.loader.parser
 
+import analmess.*
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.*
-import telegram.*
 import java.io.File
 
 class TgParser(file: File) : Parser(file) {
@@ -54,15 +54,6 @@ class TgParser(file: File) : Parser(file) {
         //ToDo
         if (str == null)
             return emptyList()
-        return listOf(
-            Media(
-                type = when (str) {
-                    //TODO
-                    "voice_message" -> MediaType.VoiceMessage
-                    else -> MediaType.Other
-                },
-                path = ""
-            )
-        )
+        return listOf(Media(str))
     }
 }

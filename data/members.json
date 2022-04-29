@@ -1,0 +1,48 @@
+{
+  "response": {
+    "count": 2,
+    "items": [
+      {
+        "member_id": 254878066
+      },
+      {
+        "member_id": -157369801
+      }
+    ],
+    "profiles": [
+      {
+        "id": 254878066,
+        "first_name": "Сергей",
+        "last_name": "Романов",
+        "can_access_closed": true,
+        "is_closed": false,
+        "sex": 2,
+        "screen_name": "oqaris",
+        "photo_50": "https:\/\/sun4-10.userapi.com\/s\/v1\/ig2\/FVZ7z0IGN7ftrTg8p6Yp0mw7c5EC9AuZ1EuGTphStbkgzkcmkkXHbO9bXfJf_uZIiAxNsYc0XavQ7c33DIHRV2es.jpg?size=50x50&quality=95&crop=341,648,1352,1352&ava=1",
+        "photo_100": "https:\/\/sun4-10.userapi.com\/s\/v1\/ig2\/asgcpSUq36lxTg5Kr_rNDg9HPwsQYeH5TdPGkLGRv6z4kL62rNkNT9n8faIJcJkxSzT3BOsnVFhE5yt918RInyh4.jpg?size=100x100&quality=95&crop=341,648,1352,1352&ava=1",
+        "online_info": {
+          "visible": true,
+          "last_seen": 1651343030,
+          "is_online": true,
+          "is_mobile": false
+        },
+        "online": 1
+      }
+    ],
+    "groups": [
+      {
+        "id": 157369801,
+        "name": "СберКот",
+        "screen_name": "sberkot",
+        "is_closed": 0,
+        "type": "group",
+        "is_admin": 0,
+        "is_member": 0,
+        "is_advertiser": 0,
+        "photo_50": "https:\/\/sun4-11.userapi.com\/s\/v1\/ig2\/MCp_nBMYuClRlJtRikG7hzfDfgwV9z6FZXhqAW3KYJohFrjAcVAoJfGdkmZDfNPPoUGxxa1MccBvkT_IxDgQsWun.jpg?size=50x50&quality=95&crop=2,0,1998,1998&ava=1",
+        "photo_100": "https:\/\/sun4-11.userapi.com\/s\/v1\/ig2\/X22HqaMZAB6cpMtlZxF2pX6x7MrQk0D2jkD9n6AFS-O3miMNik5abuy7nBr8qMGtfgYkqELvya4pAXgwsTabVFqI.jpg?size=100x100&quality=95&crop=2,0,1998,1998&ava=1",
+        "photo_200": "https:\/\/sun4-11.userapi.com\/s\/v1\/ig2\/w-b3csvemdLY1RTgJfFyxbE2oeeVcaYrbnuHLQuFR2YvAcUAXSVHqnDfUjzoFEBbpqDHSUCMW0XMQSvoWSczCvgJ.jpg?size=200x200&quality=95&crop=2,0,1998,1998&ava=1"
+      }
+    ]
+  }
+}

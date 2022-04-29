@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 import com.vdurmont.emoji.EmojiParser
 

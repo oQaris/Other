@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 import kotlinx.datetime.LocalDateTime
 
@@ -38,7 +38,7 @@ data class TextItem(val text: String, val type: String? = null)
 
 // Элемент вложения
 
-data class Media(val type: MediaType, val path: String)
+data class Media(val data: String)
 
 enum class MediaType {
     Photo, Video, VoiceMessage, Other

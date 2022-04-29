@@ -22,6 +22,7 @@ dependencies {
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.14.3")
+    implementation("com.vk.api:sdk:1.0.14")
     // Корутины
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     // Сериализация

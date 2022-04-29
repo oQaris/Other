@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 import kotlinx.datetime.*
 import java.net.MalformedURLException

@@ -1,16 +1,23 @@
-package telegram
+package analmess
 
+import analmess.Table.Builder.ColumnsAppender
+import analmess.Table.Builder.RowsAppender
+import analmess.loader.Loader
+import analmess.loader.parser.VkParser
+import analmess.loader.vkapi.VkApi
 import com.github.demidko.aot.WordformMeaning
-import telegram.Table.Builder.ColumnsAppender
-import telegram.Table.Builder.RowsAppender
-import telegram.parser.TgParser
 import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = /*"C:/Users/oQaris/Desktop/vk.txt"*/ "C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
+const val jsonPath = "C:/Users/oQaris/Desktop/vk.txt" //"C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
 const val topCount = 50
 
-val chat = TgParser(File(jsonPath)).parseChat()
+val loader: Loader = VkApi(
+    254878066,
+    "26ed147dab0c443b8d9602d44e25190227bf7ebd266b294a5fbaacf24622c4e4cf452144855c499db2e95",
+    185357991
+)
+val chat = VkParser(File(jsonPath)).parseChat()
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
 
 fun generalInfo() {
@@ -150,7 +157,7 @@ fun tableVoiceMessages() {
     val userToDurationVoiceMessages = userToMessages
         .mapValues { entry ->
             entry.value
-                .filter { m -> m.attachments.any { it.type == MediaType.VoiceMessage } }
+                .filter { m -> m.attachments.any { it.data == "audio_message" || it.data.startsWith("voice") } }
                 .map { it.durationSeconds!! }
         }
         .sortAndCheck(userToMessages.size)
@@ -197,7 +204,7 @@ fun tableVoiceMessages() {
 fun tableMediaType() {
     val userToMediaTypeWithFrequency = userToMessages
         .mapValues { entry ->
-            entry.value.flatMap { m -> m.attachments.map { it.type } }.sortedCounter()
+            entry.value.flatMap { m -> m.attachments.map { it.data } }.sortedCounter()
         }
         .sortAndCheck(userToMessages.size)
 

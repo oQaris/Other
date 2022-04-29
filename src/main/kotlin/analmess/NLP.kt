@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 import com.github.demidko.aot.PartOfSpeech
 import com.github.demidko.aot.PartOfSpeech.*

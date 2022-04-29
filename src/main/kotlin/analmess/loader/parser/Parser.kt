@@ -1,10 +1,10 @@
-package telegram.parser
+package analmess.loader.parser
 
+import analmess.Chat
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import telegram.Chat
 import java.io.File
 
 abstract class Parser(file: File) {

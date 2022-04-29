@@ -1,10 +1,10 @@
-package telegram.parser
+package analmess.loader.parser
 
+import analmess.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.*
-import telegram.*
 import java.io.File
 
 class VkParser(file: File) : Parser(file) {
@@ -40,14 +40,7 @@ class VkParser(file: File) : Parser(file) {
     private fun getAttachments(json: JsonElement): List<Media> {
         val atts = json.jsonObject["attachments"]!!.jsonArray
         return atts.map {
-            Media(
-                type = when (it.getContent("type")) {
-                    //TODO
-                    "audio_message" -> MediaType.VoiceMessage
-                    else -> MediaType.Other
-                },
-                path = ""
-            )
+            Media(it.getContent("type")!!)
         }
     }
 

@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 internal class TgParserTest {
 

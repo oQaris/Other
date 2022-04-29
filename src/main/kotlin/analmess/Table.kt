@@ -1,4 +1,4 @@
-package telegram
+package analmess
 
 class Table private constructor(
     private val padding: Int = 1,
