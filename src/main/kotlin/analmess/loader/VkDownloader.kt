@@ -1,7 +1,6 @@
-package analmess.loader.vkapi
+package analmess.loader
 
 import analmess.*
-import analmess.loader.Loader
 import com.vk.api.sdk.client.VkApiClient
 import com.vk.api.sdk.client.actors.UserActor
 import com.vk.api.sdk.httpclient.HttpTransportClient
@@ -11,8 +10,17 @@ import com.vk.api.sdk.objects.messages.responses.GetConversationMembersResponse
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import  com.vk.api.sdk.objects.messages.Message as VkMessage
 
-class VkApi(myId: Int, token: String, private val chatId: Int) : Loader {
+/**
+ * Скачивает полную историю сообщений из конкретного чата.
+ * @param myId идентификатор владельца токена.
+ * @param token токен безопасности (можно получить из URL, перейдя по ссылке ниже).
+ * @param chatId ID пользователя, сообщества (отрицательный) или беседы (2000000000+id)
+ * @see <a href="https://oauth.vk.com/authorize?client_id=6287487&scope=1073737727&
+ * redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1">oauth.vk.com/authorize</a>
+ */
+class VkDownloader(myId: Int, token: String, private val chatId: Int) : Loader {
     private val vk = VkApiClient(HttpTransportClient())
     private val actor = UserActor(myId, token)
 
@@ -22,10 +30,12 @@ class VkApi(myId: Int, token: String, private val chatId: Int) : Loader {
     }
 
     private fun loadAllMessages(peerId: Int) = buildList {
-        val countMessByStep = 200
+        val countMessByStep = 200 // max
         var offset = 0
 
-        val members = vk.messages().getConversationMembers(actor, peerId).execute()
+        val members = vk.messages()
+            .getConversationMembers(actor, peerId)
+            .execute()
 
         while (true) {
             val history = vk.messages()
@@ -37,17 +47,18 @@ class VkApi(myId: Int, token: String, private val chatId: Int) : Loader {
                 .extended(false)
                 .execute()
 
-            if (history.items.isEmpty()) break
+            addAll(history.items
+                .map { toMessage(it, members) })
 
-            addAll(history.items.map { toMessage(it, members) })
+            if (history.items.size < countMessByStep) break
             offset += countMessByStep
         }
     }
 
-    private fun toMessage(vkMess: com.vk.api.sdk.objects.messages.Message, members: GetConversationMembersResponse) =
+    private fun toMessage(vkMess: VkMessage, members: GetConversationMembersResponse) =
         Message(
             id = vkMess.id.toLong(),
-            type = "message",
+            type = "message", //todo
 
             date = Instant.fromEpochSeconds(
                 vkMess.date.toLong()

@@ -44,6 +44,12 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+/*tasks.withType<Test> {
+    minHeapSize = "512m"
+    maxHeapSize = "32768m"
+    jvmArgs = listOf("-XX:MaxPermSize=32768m")
+}*/
+
 application {
     mainClass.set("MainKt")
 }

@@ -1,20 +1,28 @@
-package analmess.loader.parser
+package analmess.loader
 
 import analmess.*
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.*
 import java.io.File
 
-class TgParser(file: File) : Parser(file) {
+/**
+ * Парсит файл, созданный десктопной версией телеграмма с помощью функции "Экспорт чата"
+ */
+class TgParser(file: File) : Loader {
 
-    override fun parseChat() = Chat(
+    private val chat = Json.parseToJsonElement(file.readText())
+
+    private fun JsonElement.getContent(name: String) = jsonObject[name]?.jsonPrimitive?.content
+
+    override fun loadChat() = Chat(
         chat.jsonObject["id"]!!.jsonPrimitive.long,
         chat.getContent("name")!!,
         chat.getContent("type")!!,
         parseMessages()
     )
 
-    private fun parseMessages() = chat.jsonObject["messages"]!!.jsonArray.map { toMessage(it) }.asReversed()
+    private fun parseMessages() = chat.jsonObject["messages"]!!.jsonArray
+        .map { toMessage(it) }.asReversed()
 
     private fun toMessage(json: JsonElement) = Message(
         id = json.getContent("id")!!.toLong(),
@@ -50,10 +58,14 @@ class TgParser(file: File) : Parser(file) {
     }
 
     private fun getAttachments(json: JsonElement): List<Media> {
-        val str = json.getContent("media_type")
-        //ToDo
-        if (str == null)
-            return emptyList()
+        val str = json.getContent("media_type") ?: return emptyList()
+        //ToDo - учитывать mime_type и photo
         return listOf(Media(str))
+    }
+
+    private fun JsonElement.isObject() = try {
+        jsonObject; true
+    } catch (e: IllegalArgumentException) {
+        false
     }
 }

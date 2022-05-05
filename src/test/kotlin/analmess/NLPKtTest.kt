@@ -22,10 +22,12 @@ internal class NLPTest {
             { assertEquals(emptyList<String>(), data.removeSparePartsOfSpeech(removeShorter = 5)) },
             { assertEquals(data - "у", data.removeSparePartsOfSpeech(removeShorter = 6, saveLonger = 1)) }
         )
-        assertEquals(listOf("непонятноеслово"), listOf("непонятноеслово").removeSparePartsOfSpeech())
+        val unknown = listOf("непонятноеслово", "")
+        assertEquals(unknown, unknown.removeSparePartsOfSpeech())
     }
 
     @Test
     fun lemmasTest() {
+        assertEquals("после", "после".lemma())
     }
 }

@@ -3,22 +3,43 @@ package analmess
 import analmess.Table.Builder.ColumnsAppender
 import analmess.Table.Builder.RowsAppender
 import analmess.loader.Loader
-import analmess.loader.parser.VkParser
-import analmess.loader.vkapi.VkApi
+import analmess.loader.VkDownloader
 import com.github.demidko.aot.WordformMeaning
-import java.io.File
 import kotlin.time.Duration
 
 const val jsonPath = "C:/Users/oQaris/Desktop/vk.txt" //"C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
-const val topCount = 50
+const val topCount = 10
 
-val loader: Loader = VkApi(
+val loader: Loader = VkDownloader(
     254878066,
-    "26ed147dab0c443b8d9602d44e25190227bf7ebd266b294a5fbaacf24622c4e4cf452144855c499db2e95",
-    185357991
+    "1fb6cda9ba3f0c45cbf9fcb7d766b1dbd94cb593d148127e89da54ed31095996f2e3ec4c6f1627194d521",
+    587172110
 )
-val chat = VkParser(File(jsonPath)).parseChat()
+val chat = loader.loadChat()
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
+
+
+fun main() {
+
+    generalInfo()
+    userSummary()
+    tableWords()
+    tableReply()
+    tableVoiceMessages()
+    tableMediaType()
+
+    // Отладка
+    println("+ Удалённые слова:")
+    println(setRemWords.joinToString("\n"))
+    println()
+
+    printInfoFromWord("ладненько")
+    printInfoFromWord("что")
+    printInfoFromWord("любой")
+    printInfoFromWord("минус")
+    printInfoFromWord("немой")
+    printInfoFromWord("после")
+}
 
 fun generalInfo() {
     println("${chat.name} - ${chat.type}\n")
@@ -157,7 +178,7 @@ fun tableVoiceMessages() {
     val userToDurationVoiceMessages = userToMessages
         .mapValues { entry ->
             entry.value
-                .filter { m -> m.attachments.any { it.data == "audio_message" || it.data.startsWith("voice") } }
+                .filter { m -> m.attachments.any { it.name == "audio_message" || it.name.startsWith("voice") } }
                 .map { it.durationSeconds!! }
         }
         .sortAndCheck(userToMessages.size)
@@ -204,7 +225,7 @@ fun tableVoiceMessages() {
 fun tableMediaType() {
     val userToMediaTypeWithFrequency = userToMessages
         .mapValues { entry ->
-            entry.value.flatMap { m -> m.attachments.map { it.data } }.sortedCounter()
+            entry.value.flatMap { m -> m.attachments.map { it.name } }.sortedCounter()
         }
         .sortAndCheck(userToMessages.size)
 
@@ -215,27 +236,6 @@ fun tableMediaType() {
     }
 }
 
-fun main() {
-
-    generalInfo()
-    userSummary()
-    tableWords()
-    tableReply()
-    tableVoiceMessages()
-    tableMediaType()
-
-    // Отладка
-    println("+ Удалённые слова:")
-    println(setRemWords.joinToString("\n"))
-    println()
-
-    printInfoFromWord("ага")
-    printInfoFromWord("что")
-    printInfoFromWord("любой")
-    printInfoFromWord("минус")
-    printInfoFromWord("немой")
-    printInfoFromWord("посол")
-}
 
 fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
     this.toSortedMap().apply { require(size == reqSize) }
@@ -250,7 +250,7 @@ fun buildTableByRows(freqByUser: List<WordsFrequency>) =
         freqByUser.forEach { add(listOf(it.lemma, it.count, it.formatOrig())) }
     })
 
-@JvmName("buildTableByRows1")
+@JvmName("buildTableByRowsPair")
 fun buildTableByRows(freqByUser: List<Pair<Any, Int>>) =
     Table.with(padding = 1, appender = ::RowsAppender, append = {
         freqByUser.forEach { add(listOf(it.first, it.second)) }
