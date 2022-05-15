@@ -14,11 +14,10 @@ fun wordsFrequency(mess: List<Message>): List<WordsFrequency> {
         val srcWords = wordToLemma
             .filter { it.second == lem }
             .map { it.first }.toSet()
-        val maxSrcWords = srcWords
-            .sortedCounter().run {
-                takeWhile { it.second == this.first().second }
-            }.map { it.first }
-        if (srcWords.size == 1) WordsFrequency(srcWords.first(), cnt, "")
+        val maxSrcWords = srcWords.maxsByCount()
+
+        if (srcWords.size == 1)
+            WordsFrequency(srcWords.first(), cnt, "")
         else WordsFrequency(lem, cnt, maxSrcWords.firstOrNull { it != lem } ?: "")
     }
 }

@@ -3,20 +3,36 @@ package analmess
 import analmess.Table.Builder.ColumnsAppender
 import analmess.Table.Builder.RowsAppender
 import analmess.loader.Loader
-import analmess.loader.VkDownloader
-import com.github.demidko.aot.WordformMeaning
+import analmess.loader.TgParser
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
+import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = "C:/Users/oQaris/Desktop/vk.txt" //"C:/Users/oQaris/Downloads/Telegram Desktop/Dima/result.json"
+const val jsonPath = "C:\\Users\\oQaris\\Desktop\\Telegram Desktop\\Milka\\chat.json"
 const val topCount = 10
 
-val loader: Loader = VkDownloader(
-    254878066,
-    "1fb6cda9ba3f0c45cbf9fcb7d766b1dbd94cb593d148127e89da54ed31095996f2e3ec4c6f1627194d521",
-    587172110
-)
-val chat = loader.loadChat()
+val loader: Loader = TgParser(File(jsonPath))
+/*VkDownloader(
+254878066,
+"1fb6cda9ba3f0c45cbf9fcb7d766b1dbd94cb593d148127e89da54ed31095996f2e3ec4c6f1627194d521",
+587172110
+)*/
+
+val chat = loadProto("analmes/proto")//loader.loadChat()
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
+
+@OptIn(ExperimentalSerializationApi::class)
+fun saveProto(fileName: String) {
+    val bytes = ProtoBuf.encodeToByteArray(chat)
+    File(fileName).writeBytes(bytes)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun loadProto(fileName: String) =
+    ProtoBuf.decodeFromByteArray<Chat>(File(fileName).readBytes())
 
 
 fun main() {
@@ -27,18 +43,16 @@ fun main() {
     tableReply()
     tableVoiceMessages()
     tableMediaType()
+    tablePartsOfSpeech()
 
     // Отладка
-    println("+ Удалённые слова:")
-    println(setRemWords.joinToString("\n"))
-    println()
+    //saveProto("analmes/proto")
 
-    printInfoFromWord("ладненько")
-    printInfoFromWord("что")
-    printInfoFromWord("любой")
-    printInfoFromWord("минус")
-    printInfoFromWord("немой")
-    printInfoFromWord("после")
+    /*println("+ Удалённые слова:")
+    println(setRemWords.joinToString("\n"))
+    println()*/
+
+    //printInfoFromWord("")
 }
 
 fun generalInfo() {
@@ -62,6 +76,15 @@ fun generalInfo() {
     print("Сообщений в день:  ")
     println(chat.messages.size / dayWithMess)
     println()
+
+    println("- Топ активных дней:")
+    val dateFreq = chat.messages.groupingBy { it.date.date }.eachCount()
+        .toList().sortedBy { (_, count) -> -count }
+        .take(topCount).unzip()
+    printTableByColumns {
+        add(dateFreq.first)
+        add(dateFreq.second)
+    }
 }
 
 fun userSummary() {
@@ -128,9 +151,18 @@ fun tableWords() {
                 "%.3f".format(v.toDouble() / userToTextMessages[k]!!.size)
             }
         )
+        val vocabulary = userToWords.mapValues { (_, v) ->
+            // первые - в словаре, вторые - нет
+            v.toSet().partition { it.inDictionary() }
+        }
         add(
-            "Словарный запас",
-            userToWords.mapValues { (_, v) -> v.toSet().size }.values
+            "Словарный запас (рус.)",
+            vocabulary.values.map { it.first.size }
+        )
+        //Todo - удалить ссылки и английские слова
+        add(
+            "Неизвестных слов",
+            vocabulary.values.map { it.second.size }
         )
     }
 }
@@ -183,7 +215,7 @@ fun tableVoiceMessages() {
         }
         .sortAndCheck(userToMessages.size)
 
-    val emptyToken = "-"
+    val emptyToken = "0"
     printTableByColumns {
         add(
             "Имя пользователя",
@@ -236,6 +268,23 @@ fun tableMediaType() {
     }
 }
 
+fun tablePartsOfSpeech() {
+    val userToPartsOfSpeechWithFrequency = userToMessages
+        .mapValues { entry ->
+            entry.value.flatMap { m ->
+                m.text.simpleText().tokens().flatMap {
+                    it.partsOfSpeech()
+                }
+            }.sortedCounter()
+        }.sortAndCheck(userToMessages.size)
+
+    printTableByColumns {
+        userToPartsOfSpeechWithFrequency.forEach { (user, typeToCount) ->
+            add(user, buildTableByRows(typeToCount).formattedRows())
+        }
+    }
+}
+
 
 fun <K : Comparable<K>, V> Map<K, V>.sortAndCheck(reqSize: Int) =
     this.toSortedMap().apply { require(size == reqSize) }
@@ -255,16 +304,6 @@ fun buildTableByRows(freqByUser: List<Pair<Any, Int>>) =
     Table.with(padding = 1, appender = ::RowsAppender, append = {
         freqByUser.forEach { add(listOf(it.first, it.second)) }
     })
-
-fun printInfoFromWord(word: String) {
-    println(word)
-    var flag = false
-    WordformMeaning.lookupForMeanings(word).forEach { mean ->
-        println("\t${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
-        flag = true
-    }
-    if (!flag) println("\tNone")
-}
 
 fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> = buildList {
     var prevUser = messages.first().from

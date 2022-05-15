@@ -58,8 +58,10 @@ class TgParser(file: File) : Loader {
     }
 
     private fun getAttachments(json: JsonElement): List<Media> {
-        val str = json.getContent("media_type") ?: return emptyList()
-        //ToDo - учитывать mime_type и photo
+        val str = json.getContent("media_type")
+            ?: json.getContent("mime_type")
+            ?: json.jsonObject["photo"]?.let { "photo" }
+            ?: return emptyList()
         return listOf(Media(str))
     }
 

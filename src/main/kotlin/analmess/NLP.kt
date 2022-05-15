@@ -19,11 +19,10 @@ fun String.tokens(): List<String> {
  * Оставить только слова из русских и английских букв, цифр и перевести в нижний регистр
  */
 fun Iterable<String>.words(): List<String> {
+    val needReg = "[^0-9A-Za-zА-Яа-яЁё]+".toRegex()
     return flatMap { part ->
-        val buf =
-            part.split("[^0-9A-Za-zА-Яа-яЁё]+".toRegex())
-                .map { it.lowercase() }
-        buf
+        part.split(needReg)
+            .map { it.lowercase() }
     }.filter { it.isNotEmpty() }
 }
 
@@ -65,3 +64,27 @@ fun String.lemmas(): List<String> {
 fun String.lemma() = this.lemmas()
     .maxsByCount()
     .minByOrNull { it.length }!!
+
+/**
+ * true - если строка содержится в словаре русского языка
+ */
+fun String.inDictionary() = lookupForMeanings(this).isNotEmpty()
+
+/**
+ * Все части речи слова
+ */
+fun String.partsOfSpeech() = lookupForMeanings(this).map { mean ->
+    (mean.partOfSpeech.takeUnless {
+        it.name == "POSL_PART_OF_SPEECH"
+    } ?: "Other").toString()
+}.maxsByCount()
+
+fun printInfoFromWord(word: String) {
+    println(word)
+    var flag = false
+    lookupForMeanings(word).forEach { mean ->
+        println("\t${mean.lemma} ${mean.morphology} ${mean.partOfSpeech} ${mean.transformations}")
+        flag = true
+    }
+    if (!flag) println("\tNone")
+}
