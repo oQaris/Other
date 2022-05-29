@@ -17,7 +17,7 @@ dependencies {
     // Комбинаторика
     implementation("com.github.shiguruikai:combinatoricskt:1.6.0")
     // NLP
-    implementation("com.github.demidko:aot:2021.11.17")
+    implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -26,10 +26,11 @@ dependencies {
     // Корутины
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     // Сериализация
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.3")
     // Дата
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
+    implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
     // Логгер
     implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
     implementation("org.slf4j:slf4j-api:1.7.36")
