@@ -1,11 +1,25 @@
 package mastermind
 
-// implementation("com.github.shiguruikai:combinatoricskt:1.6.0")
 import com.github.shiguruikai.combinatoricskt.permutationsWithRepetition
 import kotlin.math.min
 
 const val len = 4
 const val numAttempts = 7
+
+val hardSelector = object : Selector {
+    /**
+     * Обратный минимакс - выбирает ответ, который для заданного [guess] даст минимум информации
+     * @see mastermind.MinimaxDecoder.nextStep(java.util.List<java.lang.String>, java.util.List<java.lang.String>)
+     */
+    override fun select(answers: MutableList<String>, guess: String): String {
+        return answers.groupBy { evaluate(it, guess) }
+            .maxByOrNull { it.value.size }!!.value.random()
+    }
+}
+
+val ezSelector = object : Selector {
+    override fun select(answers: MutableList<String>, guess: String) = answers.random()
+}
 
 fun main() {
     println(
@@ -25,13 +39,13 @@ fun main() {
             println("Некорректный ввод!")
             return
         }
-
         answers.remove(guess)
         if (answers.isEmpty()) {
-            println("flag{MasterM1nd_VeryNice777}")
+            println("Победа!")
+            println("$guess - единственный верный ответ")
             return
         }
-        val answer = answers.random()
+        val answer = hardSelector.select(answers, guess)
 
         val (b, c) = evaluate(guess, answer)
         answers.removeIf { evaluate(it, guess) != b bc c }
@@ -39,6 +53,7 @@ fun main() {
         println("Быков: $b, Коров: $c")
     }
     println("Вы не угадали, попытайтесь ещё раз :(")
+    println("Загадано было: " + answers.random())
 }
 
 /**

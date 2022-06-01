@@ -7,10 +7,20 @@ import java.io.File
 
 fun main() {
 
-    println(generatePatterns((0 until 1_000).toList()
+    decoderStarter(
+        answerSequence(len).toMutableList(),
+        finishAction = { println(it) }
+    ) { guess ->
+        println(guess)
+        val input = readln()
+        val arr = input.split(" ").map { it.toInt() }
+        BullsAndCows(arr[0], arr[1])
+    }
+
+    /*println(generatePatterns((0 until 1_000).toList()
         .map { it.toString() })
         .entries.sortedBy { (_, v) -> v }
-        .joinToString("\n") { (k, v) -> "$k $v" })
+        .joinToString("\n") { (k, v) -> "$k $v" })*/
 }
 
 fun decoderStarter(
@@ -34,6 +44,7 @@ private class MinimaxDecoder(
     private val allAnswers: List<String>,
     private val firstGuess: String? = null
 ) {
+    private val firstGuessDataPath = "data/mastermind.json"
     private lateinit var possibleAnswers: MutableList<String>
     private lateinit var state: ResultGuess
 
@@ -46,7 +57,7 @@ private class MinimaxDecoder(
     fun firstGuess() {
         possibleAnswers = allAnswers.toMutableList()
         state = if (firstGuess == null)
-            loadOrSaveFirstGuess()
+            loadOrEvalFirstGuess()
         else ResultGuess(firstGuess, false)
     }
 
@@ -83,8 +94,8 @@ private class MinimaxDecoder(
         return ResultGuess(guess, false)
     }
 
-    private fun loadOrSaveFirstGuess(): ResultGuess {
-        val file = File("mastermind.json")
+    private fun loadOrEvalFirstGuess(): ResultGuess {
+        val file = File(firstGuessDataPath)
         val key = allAnswers.hashCode()
         var mapFirstSteps: MutableMap<Int, ResultGuess>? = null
         if (file.exists()) {
