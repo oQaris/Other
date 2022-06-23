@@ -6,11 +6,11 @@ import com.vk.api.sdk.client.actors.UserActor
 import com.vk.api.sdk.httpclient.HttpTransportClient
 import com.vk.api.sdk.objects.messages.GetHistoryRev
 import com.vk.api.sdk.objects.messages.MessageAttachmentType
-import com.vk.api.sdk.objects.messages.responses.GetConversationMembersResponse
+import com.vk.api.sdk.objects.messages.responses.GetHistoryExtendedResponse
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import  com.vk.api.sdk.objects.messages.Message as VkMessage
+import com.vk.api.sdk.objects.messages.Message as VkMessage
 
 /**
  * Скачивает полную историю сообщений из конкретного чата.
@@ -25,37 +25,33 @@ class VkDownloader(myId: Int, token: String, private val chatId: Int) : Loader {
     private val actor = UserActor(myId, token)
 
     override fun loadChat(): Chat {
-        //todo type
-        return Chat(chatId.toLong(), chatId.toString(), "", loadAllMessages(chatId))
+        val type = vk.messages().getConversationsById(actor, chatId)
+            .execute().items.joinToString { it.peer.type.name }
+        return Chat(chatId.toLong(), chatId.toString(), type, loadAllMessages(chatId))
     }
 
     private fun loadAllMessages(peerId: Int) = buildList {
         val countMessByStep = 200 // max
         var offset = 0
 
-        val members = vk.messages()
-            .getConversationMembers(actor, peerId)
-            .execute()
-
         while (true) {
             val history = vk.messages()
-                .getHistory(actor)
+                .getHistoryExtended(actor)
                 .userId(peerId)
                 .rev(GetHistoryRev.CHRONOLOGICAL)
                 .count(countMessByStep)
                 .offset(offset)
-                .extended(false)
                 .execute()
 
             addAll(history.items
-                .map { toMessage(it, members) })
+                .map { toMessage(it, history) })
 
             if (history.items.size < countMessByStep) break
             offset += countMessByStep
         }
     }
 
-    private fun toMessage(vkMess: VkMessage, members: GetConversationMembersResponse) =
+    private fun toMessage(vkMess: VkMessage, history: GetHistoryExtendedResponse) =
         Message(
             id = vkMess.id.toLong(),
             type = "message", //todo
@@ -64,10 +60,10 @@ class VkDownloader(myId: Int, token: String, private val chatId: Int) : Loader {
                 vkMess.date.toLong()
             ).toLocalDateTime(TimeZone.UTC),
 
-            from = members.profiles
+            from = history.profiles
                 .firstOrNull { it.id == vkMess.fromId }
                 ?.run { "$firstName $lastName" }
-                ?: members.groups
+                ?: history.groups
                     .first { -it.id == vkMess.fromId }.name,
 
             fromId = vkMess.fromId.toString(),

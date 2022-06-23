@@ -22,13 +22,13 @@ fun main() = runBlocking {
     val finish = decode("Боулинг")*/
     // Sunbittern
 
-    println("$start -> $finish")
+    /*println("$start -> $finish")
 
     val jumper = WikiJumper("en", start, finish)
-    jumper.start()
+    jumper.start()*/
 
     //val link = decode("Sunbittern")
-    //println(Jsoup.connect("https://en.wikipedia.org/wiki/${encode(link)}").get().html())
+    //println(Jsoup.connect("").get().html())
 
     //println(Jsoup.connect("https://en.wikipedia.org/wiki/").get().location())
 }

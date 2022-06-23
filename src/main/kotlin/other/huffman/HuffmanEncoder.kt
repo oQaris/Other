@@ -1,4 +1,4 @@
-package huffman
+package other.huffman
 
 import java.util.*
 

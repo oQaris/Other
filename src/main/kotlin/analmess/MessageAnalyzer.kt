@@ -3,7 +3,7 @@ package analmess
 import analmess.Table.Builder.ColumnsAppender
 import analmess.Table.Builder.RowsAppender
 import analmess.loader.Loader
-import analmess.loader.TgParser
+import analmess.loader.VkDownloader
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -12,30 +12,34 @@ import java.io.File
 import kotlin.time.Duration
 
 const val jsonPath = "C:\\Users\\oQaris\\Desktop\\Telegram Desktop\\Milka\\chat.json"
-const val topCount = 10
+const val topCount = 20
 
-val loader: Loader = TgParser(File(jsonPath))
-/*VkDownloader(
-254878066,
-"1fb6cda9ba3f0c45cbf9fcb7d766b1dbd94cb593d148127e89da54ed31095996f2e3ec4c6f1627194d521",
-587172110
-)*/
+val loader: Loader = //TgParser(File(jsonPath))
+    VkDownloader(
+        254878066,
+        "5e709d755b8044574939ba4439dbc62f146e8b2f7118938ac9fc91cf058ccb7076796c007645ece5cb2a6",
+        2000000000 + 86
+    )
 
-val chat = loadProto("analmes/proto")//loader.loadChat()
+val chat = loadChat("analmes/golden")
+//loader.loadChat()
+
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
 
 @OptIn(ExperimentalSerializationApi::class)
-fun saveProto(fileName: String) {
+fun saveChat(fileName: String) {
     val bytes = ProtoBuf.encodeToByteArray(chat)
     File(fileName).writeBytes(bytes)
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun loadProto(fileName: String) =
+fun loadChat(fileName: String) =
     ProtoBuf.decodeFromByteArray<Chat>(File(fileName).readBytes())
 
 
 fun main() {
+
+    //saveChat("analmes/golden")
 
     generalInfo()
     userSummary()
@@ -46,13 +50,12 @@ fun main() {
     tablePartsOfSpeech()
 
     // Отладка
-    //saveProto("analmes/proto")
 
-    /*println("+ Удалённые слова:")
+    println("+ Удалённые слова:")
     println(setRemWords.joinToString("\n"))
-    println()*/
+    println()
 
-    //printInfoFromWord("")
+    printInfoFromWord("дима")
 }
 
 fun generalInfo() {
@@ -137,9 +140,16 @@ fun tableWords() {
             "Кол-во сообщений",
             userToMessages.map { (_, v) -> v.size }
         )
+        val userToLengthsMessage = userToTextMessages
+            .mapValues { (_, v) -> v.map { it.length } }
+        add(
+            "Ср. длина сообщения",
+            userToLengthsMessage.map { (_, v) ->
+                "%.3f".format(v.mean())
+            }
+        )
         // Слова
         val userToWordsCount = userToWords
-            .sortAndCheck(userToMessages.size)
             .mapValues { (_, v) -> v.size }
         add(
             "Количество слов",
@@ -147,7 +157,7 @@ fun tableWords() {
         )
         add(
             "Слов в сообщении",
-            userToWordsCount.entries.map { (k, v) ->
+            userToWordsCount.map { (k, v) ->
                 "%.3f".format(v.toDouble() / userToTextMessages[k]!!.size)
             }
         )
@@ -279,8 +289,26 @@ fun tablePartsOfSpeech() {
         }.sortAndCheck(userToMessages.size)
 
     printTableByColumns {
-        userToPartsOfSpeechWithFrequency.forEach { (user, typeToCount) ->
-            add(user, buildTableByRows(typeToCount).formattedRows())
+
+        val sortedPartsOfSpeech = userToPartsOfSpeechWithFrequency.entries
+            .fold(setOf<String>()) { acc, ent -> acc + ent.value.unzip().first }
+            .sortedBy { pos ->
+                userToPartsOfSpeechWithFrequency.entries.sumOf { posToFreq ->
+                    posToFreq.value.firstOrNull { it.first == pos }?.second ?: 0
+                }
+            }.reversed()
+
+        add("Часть речи", sortedPartsOfSpeech)
+
+        userToPartsOfSpeechWithFrequency.forEach { (user, posToFreq) ->
+            val col = buildList {
+                sortedPartsOfSpeech.forEach { pos ->
+                    val all = posToFreq.sumOf { it.second }.toDouble()
+                    val percent = (posToFreq.firstOrNull { it.first == pos }?.second ?: 0) / all
+                    add(String.format("%.3f", percent * 100) + " %")
+                }
+            }
+            add(user, col)
         }
     }
 }

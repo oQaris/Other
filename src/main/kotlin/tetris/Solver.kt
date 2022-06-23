@@ -48,11 +48,11 @@ private val input = listOf(
     listOf(1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1),
 )
 
-val width = input.first().size
-val height = input.size
+internal val width = input.first().size
+internal val height = input.size
 
-val values = generateSatValues(bricks)
-fun Brick.valIdx() = values.indexOf(this) + 1
+private val values = generateSatValues(bricks)
+private fun Brick.valIdx() = values.indexOf(this) + 1
 
 fun main() {
     require(input.all { it.size == input.first().size })
@@ -124,7 +124,7 @@ fun main() {
     }
 }
 
-private fun Collection<Int>.toVec() = VecInt(this.toIntArray())
+fun Collection<Int>.toVec() = VecInt(this.toIntArray())
 
 private fun prettyPrint(primeImplicant: IntArray) {
     var form = zeroBrick()

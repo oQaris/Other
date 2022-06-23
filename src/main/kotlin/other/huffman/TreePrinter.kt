@@ -1,4 +1,4 @@
-package huffman
+package other.huffman
 
 import kotlin.math.max
 import kotlin.math.pow

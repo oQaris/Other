@@ -73,11 +73,8 @@ fun String.inDictionary() = lookupForMeanings(this).isNotEmpty()
 /**
  * Все части речи слова
  */
-fun String.partsOfSpeech() = lookupForMeanings(this).map { mean ->
-    (mean.partOfSpeech.takeUnless {
-        it.name == "POSL_PART_OF_SPEECH"
-    } ?: "Other").toString()
-}.maxsByCount()
+fun String.partsOfSpeech() = lookupForMeanings(this)
+    .map { it.partOfSpeech.description }.maxsByCount()
 
 fun printInfoFromWord(word: String) {
     println(word)
