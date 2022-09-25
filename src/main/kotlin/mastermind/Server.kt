@@ -1,25 +1,7 @@
 package mastermind
 
-import com.github.shiguruikai.combinatoricskt.permutationsWithRepetition
-import kotlin.math.min
-
-const val len = 4
-const val numAttempts = 7
-
-val hardSelector = object : Selector {
-    /**
-     * Обратный минимакс - выбирает ответ, который для заданного [guess] даст минимум информации
-     * @see mastermind.MinimaxDecoder.nextStep(java.util.List<java.lang.String>, java.util.List<java.lang.String>)
-     */
-    override fun select(answers: MutableList<String>, guess: String): String {
-        return answers.groupBy { evaluate(it, guess) }
-            .maxByOrNull { it.value.size }!!.value.random()
-    }
-}
-
-val ezSelector = object : Selector {
-    override fun select(answers: MutableList<String>, guess: String) = answers.random()
-}
+private const val len = 4
+private const val numAttempts = 7
 
 fun main() {
     println(
@@ -54,25 +36,4 @@ fun main() {
     }
     println("Вы не угадали, попытайтесь ещё раз :(")
     println("Загадано было: " + answers.random())
-}
-
-/**
- * Последовательность всевозможных строк длины [len], содержащих числа из [range]
- */
-fun answerSequence(len: Int, range: IntRange = 0..9): Sequence<String> {
-    return range.permutationsWithRepetition(len).map { it.joinToString("") }
-}
-
-/**
- * Число быков и коров для текущей догадки и
- * evaluate(a, b) == evaluate(b, a)
- */
-fun evaluate(guess: String, answer: String): BullsAndCows {
-    val counterAnswer = answer.toList().counting()
-
-    val matches = guess.toList().counting().entries
-        .sumOf { (t, u) -> min(u, counterAnswer[t] ?: 0) }
-
-    val bulls = guess.zip(answer).count { it.first == it.second }
-    return bulls bc matches - bulls
 }
