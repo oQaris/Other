@@ -4,6 +4,9 @@ import analmess.Table.Builder.ColumnsAppender
 import analmess.Table.Builder.RowsAppender
 import analmess.loader.Loader
 import analmess.loader.VkDownloader
+import com.github.demidko.aot.MorphologyTag
+import com.github.demidko.aot.PartOfSpeech
+import com.github.demidko.aot.WordformMeaning
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -17,7 +20,7 @@ const val topCount = 20
 val loader: Loader = //TgParser(File(jsonPath))
     VkDownloader(
         254878066,
-        "5e709d755b8044574939ba4439dbc62f146e8b2f7118938ac9fc91cf058ccb7076796c007645ece5cb2a6",
+        "vk1.a.SONOLoNIMEJh5FuwxzIin4IuczBN3PT30EnZMk0qI7d9SOPFOegj7x0tnA_8_cotRH6VRH8jXv-iKzpMqJZauJFOEkqYkXykquAp5F4pAvZjl2jZh9gJEw66QNIyLUfzaU_9W1nG1Er_fKRcUOC_co6rVrlJdrh2yvFQWl8FmaSX3nBJN_G5AWJK5T30cqBG",
         2000000000 + 86
     )
 
@@ -38,6 +41,17 @@ fun loadChat(fileName: String) =
 
 
 fun main() {
+
+    val freqByUser = wordsFrequency(userToMessages["Артём Мухамед-Каримов"]!!)
+    freqByUser.filter { it.count > 1 }.map { it.lemma }.toSet()
+        .filter { w ->
+            w.inDictionary() && WordformMeaning.lookupForMeanings(w).all {
+                it.lemma.toString().length == 4 && it.partOfSpeech == PartOfSpeech.Noun
+                        && !it.morphology.contains(MorphologyTag.Inanimate)
+            }
+        }
+        .also { println(it.size) }
+        .forEach { println(it) }
 
     //saveChat("analmes/golden")
 

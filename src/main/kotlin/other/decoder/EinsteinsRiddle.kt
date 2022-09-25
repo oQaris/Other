@@ -73,35 +73,35 @@ fun main() {
     }.toList()
 
     vars.combinations(n).filter { newVars ->
-            // Все различны
-            newVars.groupBy { it.house }.size == n
-                    && newVars.groupBy { it.color }.size == n
-                    && newVars.groupBy { it.nationality }.size == n
-                    && newVars.groupBy { it.drink }.size == n
-                    && newVars.groupBy { it.cigarettes }.size == n
-                    && newVars.groupBy { it.animal }.size == n
-        }.filter { newVars ->
-            // Комбинированные условия
-            run {
-                val gre = newVars.first { it.color == Color.Green }
-                val whi = newVars.first { it.color == Color.White }
-                gre.house.ordinal - 1 == whi.house.ordinal
-            } && run {
-                val cig = newVars.first { it.cigarettes == Cigarettes.Chesterfield }
-                val fox = newVars.first { it.animal == Animal.Fox }
-                abs(cig.house.ordinal - fox.house.ordinal) == 1
-            } && run {
-                val cig = newVars.first { it.cigarettes == Cigarettes.Kool }
-                val hor = newVars.first { it.animal == Animal.Horse }
-                abs(cig.house.ordinal - hor.house.ordinal) == 1
-            } && run {
-                val nor = newVars.first { it.nationality == Nationality.Norwegian }
-                val blu = newVars.first { it.color == Color.Blue }
-                abs(nor.house.ordinal - blu.house.ordinal) == 1
-            }
-        }.forEach { row ->
-            println(row.joinToString("\n", postfix = "\n---------") {
-                "${it.house} ${it.color} ${it.nationality} ${it.drink} ${it.cigarettes} ${it.animal}"
-            })
+        // Все различны
+        newVars.groupBy { it.house }.size == n
+                && newVars.groupBy { it.color }.size == n
+                && newVars.groupBy { it.nationality }.size == n
+                && newVars.groupBy { it.drink }.size == n
+                && newVars.groupBy { it.cigarettes }.size == n
+                && newVars.groupBy { it.animal }.size == n
+    }.filter { newVars ->
+        // Комбинированные условия
+        run {
+            val gre = newVars.first { it.color == Color.Green }
+            val whi = newVars.first { it.color == Color.White }
+            gre.house.ordinal - 1 == whi.house.ordinal
+        } && run {
+            val cig = newVars.first { it.cigarettes == Cigarettes.Chesterfield }
+            val fox = newVars.first { it.animal == Animal.Fox }
+            abs(cig.house.ordinal - fox.house.ordinal) == 1
+        } && run {
+            val cig = newVars.first { it.cigarettes == Cigarettes.Kool }
+            val hor = newVars.first { it.animal == Animal.Horse }
+            abs(cig.house.ordinal - hor.house.ordinal) == 1
+        } && run {
+            val nor = newVars.first { it.nationality == Nationality.Norwegian }
+            val blu = newVars.first { it.color == Color.Blue }
+            abs(nor.house.ordinal - blu.house.ordinal) == 1
         }
+    }.forEach { row ->
+        println(row.joinToString("\n", postfix = "\n---------") {
+            "${it.house} ${it.color} ${it.nationality} ${it.drink} ${it.cigarettes} ${it.animal}"
+        })
+    }
 }
