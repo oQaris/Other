@@ -27,6 +27,16 @@ fun Iterable<String>.words(): List<String> {
 }
 
 /**
+ * Оставить только слова из русских и английских букв, цифр и перевести в нижний регистр
+ */
+fun String.rusWords(): List<String> {
+    val needReg = "[^А-яЁё]+".toRegex()
+    return split(needReg)
+        .map { it.lowercase() }
+        .filter { it.isNotEmpty() }
+}
+
+/**
  * Удалить служебные части речи.
  * Вне зависимости от части речи:
  * Если [removeShorter] не null, то удалить слова, все леммы которого короче [removeShorter].
