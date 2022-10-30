@@ -1,6 +1,6 @@
 package mastermind
 
-private const val len = 4
+const val len = 4
 private const val numAttempts = 7
 
 fun main() {

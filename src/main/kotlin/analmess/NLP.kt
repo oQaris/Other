@@ -40,10 +40,10 @@ fun String.rusWords(): List<String> {
  * Удалить служебные части речи.
  * Вне зависимости от части речи:
  * Если [removeShorter] не null, то удалить слова, все леммы которого короче [removeShorter].
- * Если [saveLonger] не null, то оставить слова, хотя бы одна леммы которого длиннее [saveLonger]
+ * Если [saveLonger] не null, то оставить слова, хотя бы одна лемма которого длиннее [saveLonger]
  */
 fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLonger: Int? = 5): List<String> {
-    val auxiliaryPartsOfSpeech =
+    val excludedPartsOfSpeech =
         setOf<PartOfSpeech>(Pretext, Particle, Union, Pronoun, PronounAdjective/* Interjection, Predicative*/)
     return filterNot { word ->
         val means = lookupForMeanings(word)
@@ -55,7 +55,7 @@ fun Iterable<String>.removeSparePartsOfSpeech(removeShorter: Int? = null, saveLo
             return@filterNot false
         if (lemmas.all { it.length < (removeShorter ?: 0) })
             return@filterNot true
-        means.any { it.partOfSpeech in auxiliaryPartsOfSpeech }
+        means.any { it.partOfSpeech in excludedPartsOfSpeech }
     }
 }
 
