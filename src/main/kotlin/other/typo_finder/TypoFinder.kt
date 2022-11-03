@@ -3,6 +3,10 @@ package other.typo_finder
 import analmess.inDictionary
 import analmess.rusWords
 import analmess.sortedCounter
+import ru.amayakasa.linguistic.YandexSpeller
+import ru.amayakasa.linguistic.parameters.Language
+import ru.amayakasa.linguistic.parameters.ResponseInterface
+import ru.amayakasa.linguistic.parameters.Version
 import java.io.File
 
 fun main() {
@@ -17,12 +21,12 @@ fun main() {
     File("list_file_typos.txt").printWriter().apply {
         println("Search for typos in $root\nin files with extensions:\n" + exts.joinToString())
 
-        sequenceFiles(root).forEach { file ->
+        sequenceFiles(root, extsFilter).forEach { file ->
 
             val typoWords = file.bufferedReader()
                 .lineSequence().flatMap { line ->
                     line.rusWords().filterNot {
-                        it.inDictionary() || inExtraDict(it)
+                        it.inDictionary() //|| inExtraDict(it)
                     }
                 }.toList()
 
@@ -34,16 +38,19 @@ fun main() {
                 println()
             }
         }
-    }
+    }.flush()
 
-    File("report_typos.txt").printWriter().apply {
+    File("report_typos.csv").printWriter().apply {
         println("Total typos:  " + allTypos.size)
         println("Unique typos: " + allTypos.toSet().size)
         println("Sorted list of typos:")
-        allTypos.sortedCounter().forEach { (k, v) ->
-            println("$k\t$v")
+        allTypos.sortedCounter().forEach { (word, count) ->
+            val correct = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
+                .getSpelledPhrase(word, Language.RUSSIAN).misspelledWords.firstOrNull()?.variants?.first() ?: ""
+            println("$word;$correct;$count")
         }
-    }
+        println()
+    }.flush()
 }
 
 val exts = setOf(
@@ -117,7 +124,7 @@ val extraDictionary = setOf(
 )
 
 fun inExtraDict(word: String) = extraDictionary.any {
-    word.startsWith(it) && word.length - it.length < 5.coerceAtMost(word.length / 3)
+    word.startsWith(it) && word.length - it.length < 4//5.coerceAtMost(word.length / 3)
 }
 
 fun allExts(root: File) = sequenceFiles(root)

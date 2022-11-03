@@ -19,6 +19,7 @@ dependencies {
     // NLP
     implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
+    implementation(files("/libs/YandexLinguisticBundle-1.1.jar"))
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.15.3")

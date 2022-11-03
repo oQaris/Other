@@ -1,6 +1,6 @@
 package analmess
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 
@@ -29,5 +29,42 @@ internal class NLPTest {
     @Test
     fun lemmasTest() {
         assertEquals("после", "после".lemma())
+    }
+
+    @Test
+    fun rusWordsTest() {
+        assertEquals(
+            listOf(
+                "привет", "всем", "я", "живу", "в", "санкт-петербурге", "и",
+                "китайский", "работа", "учёба", "кто-то", "и", "т", "д"
+            ),
+            ("Привет всем! Я живу в Санкт-Петербурге, I know english  и китайский." +
+                    "Работа/Учёба кто-то и т.д.").rusWords()
+        )
+    }
+
+    @Test
+    fun commentsTest() {
+        println(("s = \"asd\"fds\"\n" +
+                "\"//\\\\////\\\\\\\\\\/**/\"\n" +
+                "''\"\"l;l;;l;'\n" +
+                "logger.error(\"\", ex);\n" +
+                "        }\n" +
+                "\"\"\n" +
+                "    }\n" +
+                "test //fdds\n" +
+                "////kjoinoi\n" +
+                "     lklkl //kjpo\n" +
+                "/*dsf \n" +
+                "*/\n" +
+                "/** dsf \n" +
+                "*/\n" +
+                "/**/").javaComments())
+    }
+
+    @Test
+    fun nlpTest() {
+        assertTrue("Санкт-Петербург".inDictionary())
+        assertFalse("т.д".inDictionary())
     }
 }

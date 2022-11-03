@@ -41,6 +41,16 @@ fun String.rusWords(): List<String> {
         .filter { it.isNotEmpty() }*/
 }
 
+fun String.javaComments(): List<String> {
+    val comReg = ("\"(?:\\.|[^\"])*\"|" +
+            "(\\/\\/[^\\n]*)(?=\\n|\$)|" +
+            "(\\/\\*.*?\\*\\/)").toRegex()
+    return comReg.findAll(this)
+        .map { it.groupValues[2] }
+        .filter { it.isNotEmpty() }
+        .toList()
+}
+
 /**
  * Удалить служебные части речи.
  * Вне зависимости от части речи:
