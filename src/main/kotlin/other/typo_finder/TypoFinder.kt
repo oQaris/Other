@@ -26,8 +26,8 @@ fun main() {
         println("Search for typos in $root\nin files with extensions:\n" + exts.joinToString())
 
         var counter = 0
-        fun chatProgress() {
-            if (counter != 0 && counter % 100 == 0)
+        fun chatProgress(isCheckNum: Boolean = true) {
+            if (!isCheckNum || (counter != 0 && counter % 100 == 0))
                 println("Обработано $counter файлов. Найдено ${allTypos.size} потенциальных опечаток.")
             counter++
         }
@@ -42,7 +42,7 @@ fun main() {
             val comments = file.readText()
                 .comments(CommentRegex.JAVA)
                 .map { it.trim() }
-                .map { it.replace("\\s+".toRegex(), " ") }
+                .map { it.replace("(\\s+\\*\\s+)|\\s+".toRegex(), " ") }
 
             val rusTypoComments = comments.filter { com ->
                 com.rusWords().any { !it.inDictionary() }
@@ -57,7 +57,7 @@ fun main() {
             }
             chatProgress()
         }
-        chatProgress()
+        chatProgress(false)
     }.flush()
 
     println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
