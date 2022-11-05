@@ -45,21 +45,26 @@ internal class NLPTest {
 
     @Test
     fun commentsTest() {
-        println(("s = \"asd\"fds\"\n" +
-                "\"//\\\\////\\\\\\\\\\/**/\"\n" +
-                "''\"\"l;l;;l;'\n" +
-                "logger.error(\"\", ex);\n" +
-                "        }\n" +
-                "\"\"\n" +
-                "    }\n" +
-                "test //fdds\n" +
-                "////kjoinoi\n" +
-                "     lklkl //kjpo\n" +
-                "/*dsf \n" +
-                "*/\n" +
-                "/** dsf \n" +
-                "*/\n" +
-                "/**/").javaComments())
+        assertEquals(
+            listOf("fdds", "kjoinoi", "kjpo", "dsf \n", " dsf \n"),
+            ("s = \"asd\"fds\"\n" +
+                    "\"//\\\\////\\\\\\\\\\/**/\"\n" +
+                    "\"asdas\\\\\"asdasd\"\n" +
+                    "'fghfh\"jkjk'" +
+                    "''\"\"l;l;;l;'\n" +
+                    "logger.error(\"\", ex);\n" +
+                    "        }\n" +
+                    "\"\"\n" +
+                    "    }\n" +
+                    "test //fdds\n" +
+                    "////kjoinoi\n" +
+                    "     lklkl //kjpo\n" +
+                    "/*dsf \n" +
+                    "*/\n" +
+                    "/** dsf \n" +
+                    "*/\n" +
+                    "/**/").comments(CommentRegex.JAVA)
+        )
     }
 
     @Test

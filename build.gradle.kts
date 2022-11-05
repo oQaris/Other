@@ -20,6 +20,8 @@ dependencies {
     implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
     implementation(files("/libs/YandexLinguisticBundle-1.1.jar"))
+    implementation("net.java.dev.jna:jna:5.12.1")
+    implementation("com.alphacephei:vosk:0.3.38")
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.15.3")
@@ -38,7 +40,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
     // Логгер
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.2")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.3")
     implementation("org.slf4j:slf4j-api:2.0.3")
     implementation("ch.qos.logback:logback-classic:1.4.4")
 }

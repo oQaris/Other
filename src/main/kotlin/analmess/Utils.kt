@@ -29,29 +29,6 @@ fun String.isURL() = try {
     false
 }
 
-fun <T : Number> Collection<T>.mean() = this.sumOf { it.toDouble() } / this.size
+fun <T : Number> Collection<T>.mean() = sumOf { it.toDouble() } / size
 
-/*
-* @return Среднее арифметическое временных меток
-fun getMean(): Long {
-    if (times.isEmpty()) return 0L
-    return times.sum() / times.size
-}
-
-*/
-/** @return Медиану временных меток *//*
-
-fun getMedian(): Long {
-    if (times.isEmpty()) return 0
-    val sortTimes = times.sorted()
-    val n = times.size
-    return if (n % 2 == 1) sortTimes[(n - 1) / 2]
-    else (sortTimes[n / 2 - 1] + sortTimes[n / 2]) / 2
-}
-
-*/
-/** @return Моду временных меток *//*
-
-fun getMode(): Long {
-    return times.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: 0L
-}*/
+fun <T : Number> Collection<T>.median() = sortedBy { it.toDouble() }[size / 2]

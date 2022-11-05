@@ -3,7 +3,7 @@ package analmess
 import analmess.Table.Builder.ColumnsAppender
 import analmess.Table.Builder.RowsAppender
 import analmess.loader.Loader
-import analmess.loader.VkDownloader
+import analmess.loader.TgParser
 import com.github.demidko.aot.MorphologyTag
 import com.github.demidko.aot.PartOfSpeech
 import com.github.demidko.aot.WordformMeaning
@@ -14,18 +14,18 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import java.io.File
 import kotlin.time.Duration
 
-const val jsonPath = "C:\\Users\\oQaris\\Desktop\\Telegram Desktop\\Milka\\chat.json"
+const val jsonPath = "C:/Users/oQaris/Desktop/Telegram Desktop/Polina/result.json"
 const val topCount = 20
 
-val loader: Loader = //TgParser(File(jsonPath))
-    VkDownloader(
-        254878066,
-        "vk1.a.SONOLoNIMEJh5FuwxzIin4IuczBN3PT30EnZMk0qI7d9SOPFOegj7x0tnA_8_cotRH6VRH8jXv-iKzpMqJZauJFOEkqYkXykquAp5F4pAvZjl2jZh9gJEw66QNIyLUfzaU_9W1nG1Er_fKRcUOC_co6rVrlJdrh2yvFQWl8FmaSX3nBJN_G5AWJK5T30cqBG",
-        2000000000 + 86
-    )
+val loader: Loader = TgParser(File(jsonPath))
+/*VkDownloader(
+    254878066,
+    "vk1.a.SONOLoNIMEJh5FuwxzIin4IuczBN3PT30EnZMk0qI7d9SOPFOegj7x0tnA_8_cotRH6VRH8jXv-iKzpMqJZauJFOEkqYkXykquAp5F4pAvZjl2jZh9gJEw66QNIyLUfzaU_9W1nG1Er_fKRcUOC_co6rVrlJdrh2yvFQWl8FmaSX3nBJN_G5AWJK5T30cqBG",
+    2000000000 + 86
+)*/
 
-val chat = loadChat("analmes/golden")
-//loader.loadChat()
+val chat = //loadChat("analmes/golden")
+    loader.loadChat()
 
 val userToMessages = chat.messages.groupBy { it.from }.toSortedMap()
 
@@ -41,8 +41,10 @@ fun loadChat(fileName: String) =
 
 
 fun main() {
+    voiceToText()
+    return
 
-    val freqByUser = wordsFrequency(userToMessages["Артём Мухамед-Каримов"]!!)
+    /*val freqByUser = wordsFrequency(userToMessages["Артём Мухамед-Каримов"]!!)
     freqByUser.filter { it.count > 1 }.map { it.lemma }.toSet()
         .filter { w ->
             w.inDictionary() && WordformMeaning.lookupForMeanings(w).all {
@@ -52,7 +54,7 @@ fun main() {
         }
         .also { println(it.size) }
         .forEach { println(it) }
-
+*/
     //saveChat("analmes/golden")
 
     generalInfo()
@@ -265,6 +267,7 @@ fun tableVoiceMessages() {
             "Avg длина ГС",
             userToDurationVoiceMessages.values.map { durs ->
                 if (durs.isEmpty()) return@map emptyToken
+                //todo mean
                 durs.reduce { acc, dur -> acc + dur } / durs.size
             }
         )
@@ -272,6 +275,7 @@ fun tableVoiceMessages() {
             "Mdn длина ГС",
             userToDurationVoiceMessages.values.map { durs ->
                 if (durs.isEmpty()) return@map emptyToken
+                //todo median
                 durs.sorted()[durs.size / 2]
             }
         )

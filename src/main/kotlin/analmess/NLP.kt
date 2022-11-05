@@ -3,6 +3,11 @@ package analmess
 import com.github.demidko.aot.PartOfSpeech
 import com.github.demidko.aot.PartOfSpeech.*
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
+import org.vosk.Model
+import java.io.DataInputStream
+import java.io.File
+import javax.sound.sampled.AudioSystem
+
 
 /**
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
@@ -16,7 +21,7 @@ fun String.tokens(): List<String> {
 }
 
 /**
- * Оставить только слова из русских и английских букв, цифр и перевести в нижний регистр
+ * Оставить только слова из русских и английских букв, цифр и перевести в нижний регистр.
  */
 fun Iterable<String>.words(): List<String> {
     val needReg = "[^0-9A-Za-zА-Яа-яЁё]+".toRegex()
@@ -27,7 +32,7 @@ fun Iterable<String>.words(): List<String> {
 }
 
 /**
- * Оставить только слова из русских букв
+ * Оставить только слова из русских букв (включая слова через дефис), перевести в нижний регистр.
  */
 fun String.rusWords(): List<String> {
     val needReg = "[А-яЁё]+(-[А-яЁё]+)?".toRegex()
@@ -36,19 +41,60 @@ fun String.rusWords(): List<String> {
         .filter { it.isNotEmpty() }
         .map { it.lowercase() }
         .toList()
-    /*return split(needReg)
-        .map { it.lowercase() }
-        .filter { it.isNotEmpty() }*/
 }
 
-fun String.javaComments(): List<String> {
-    val comReg = ("\"(?:\\.|[^\"])*\"|" +
-            "(\\/\\/[^\\n]*)(?=\\n|\$)|" +
-            "(\\/\\*.*?\\*\\/)").toRegex()
-    return comReg.findAll(this)
-        .map { it.groupValues[2] }
-        .filter { it.isNotEmpty() }
+/**
+ * Возвращает список комментариев для заданного типа контента.
+ */
+fun String.comments(holder: CommentRegex): List<String> {
+    require(holder != CommentRegex.STRING)
+    return holder.regex.findAll(this)
+        .map { res ->
+            res.groupValues[2].takeIf {
+                it.isNotEmpty()
+            } ?: res.groupValues[3]
+        }.filter { it.isNotEmpty() }
         .toList()
+}
+
+enum class CommentRegex(val regex: Regex) {
+    /**
+     * Строковая переменная в двойных или одинарных кавычках, с учётом экранирования символом \. Группа без захвата.
+     * - Группа 1 - тип кавычки.
+     * - Группа без захвата - содержание строки.
+     */
+    STRING("(\"|')(?:\\\\(?!\\1)|\\\\\\1|.)*?\\1".toRegex()),
+
+    /**
+     * Комментарии в C, C++, PHP, C#, Java и JavaScript коде.
+     * - Группа 2 - однострочные комментарии.
+     * - Группа 3 - javadoc и многострочные комментарии.
+     */
+    JAVA("${STRING.regex}|//+(.*)|(?s)/\\*+(.*?)\\*/".toRegex()),
+
+    /**
+     * Комментарии в Shell скриптах и Python коде.
+     * - Группа 2 - однострочные комментарии.
+     */
+    PY("${STRING.regex}|#+(.*)".toRegex()),
+
+    /**
+     * Комментарии в HTML, XML, XHTML, XAML разметке.
+     * - Группа 2 - многострочные комментарии.
+     */
+    HTML("${STRING.regex}|(?s)/<!--(.*?)-->".toRegex()),
+
+    /**
+     * Комментарии в PL/SQL, Ада, Lua.
+     * - Группа 2 - однострочные комментарии.
+     */
+    SQL("${STRING.regex}|--(.*)".toRegex()),
+
+    /**
+     * Конфигурационные (ini) файлы, файлы реестра Windows (REG), ассемблер.
+     * - Группа 2 - однострочные комментарии.
+     */
+    CONF("${STRING.regex}|;(.*)".toRegex()),
 }
 
 /**
@@ -109,4 +155,22 @@ fun printInfoFromWord(word: String) {
         flag = true
     }
     if (!flag) println("\tNone")
+}
+
+
+fun voiceToText() {
+    val model = Model("C:\\Users\\oQaris\\Downloads\\vosk\\vosk-model-ru-0.22-compile")
+    val audioFile =
+        File("C:\\Users\\oQaris\\Desktop\\Telegram Desktop\\Polina\\voice_messages\\audio_487@18-10-2022_21-06-45.ogg")
+
+    val samples: ByteArray
+    val inputStream = AudioSystem.getAudioInputStream(audioFile)
+    DataInputStream(inputStream).use { dis ->
+        val format = inputStream.format
+        samples = ByteArray((inputStream.frameLength * format.frameSize).toInt())
+        dis.readFully(samples)
+    }
+    val rec = org.vosk.Recognizer(model, 16000f)
+    rec.acceptWaveForm(samples, samples.size)
+    println(rec.finalResult)
 }
