@@ -1,6 +1,8 @@
 package other.typo_finder
 
-import analmess.*
+import analmess.inDictionary
+import analmess.rusWords
+import analmess.sortedCounter
 import ru.amayakasa.linguistic.YandexSpeller
 import ru.amayakasa.linguistic.parameters.Language
 import ru.amayakasa.linguistic.parameters.ResponseInterface
@@ -10,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("C:\\Users\\oQaris\\Desktop\\Git")
+    val root = File("Z:\\igas")
 
     //allExts(root).sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -20,69 +22,73 @@ fun main() {
         .also { timeMark = System.currentTimeMillis() }
 
     val allTypos = mutableListOf<String>()
+
+    val chatter1 = ProgressChatter {
+        println("Обработано $it файлов. Найдено ${allTypos.size} неизвестных слов.")
+    }
     println("Запущен поиск комментариев...")
 
     File("list_file_typos.txt").printWriter().apply {
         println("Search for typos in $root\nin files with extensions:\n" + exts.joinToString())
 
-        var counter = 0
-        fun chatProgress(isCheckNum: Boolean = true) {
-            if (!isCheckNum || (counter != 0 && counter % 100 == 0))
-                println("Обработано $counter файлов. Найдено ${allTypos.size} потенциальных опечаток.")
-            counter++
-        }
         sequenceFiles(root, extsFilter).forEach { file ->
-            /*val typoWords = file.bufferedReader()
+            val typoWords = file.bufferedReader()
                 .lineSequence().flatMap { line ->
                     line.rusWords().filterNot {
-                        it.inDictionary() //|| inExtraDict(it)
+                        inExtraDict(it) || it.inDictionary()
                     }
-                }.toList()*/
+                }.toList()
 
-            val comments = file.readText()
+            /*val comments = file.readText()
                 .comments(CommentRegex.JAVA)
                 .map { it.trim() }
                 .map { it.replace("(\\s+\\*\\s+)|\\s+".toRegex(), " ") }
 
             val rusTypoComments = comments.filter { com ->
                 com.rusWords().any { !it.inDictionary() }
-            }
+            }*/
 
-            allTypos += rusTypoComments
+            allTypos += typoWords
 
-            if (rusTypoComments.isNotEmpty()) {
+            if (typoWords.isNotEmpty()) {
                 println(file.absolutePath)
-                rusTypoComments.toSet().forEach { println(it) }
+                typoWords.toSet().forEach { println(it) }
                 println()
             }
-            chatProgress()
+            chatter1.incProgress()
         }
-        chatProgress(false)
+        chatter1.chatProgress()
     }.flush()
 
     println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
 
-    var counter = 0
+    var confirmed = 0
+    val chatter2 = ProgressChatter(10)
     File("report_typos.csv").printWriter().apply {
         println("Total typos:;" + allTypos.size + ';')
         println("Unique typos:;" + allTypos.toSet().size + ';')
         println("Sorted list of typos:;;")
-        allTypos.sortedCounter().forEach { (word, count) ->
-            //todo добавить исправление всего предложения, а не первого слова
-            val correct = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
-                .getSpelledPhrase(word, Language.RUSSIAN).misspelledWords.firstOrNull()?.variants?.first() ?: ""
-            if (correct.isNotEmpty()) {
-                println("$word;$correct;$count")
-                counter++
+        try {
+            allTypos.sortedCounter().forEach { (word, count) ->
+                //todo добавить исправление всего предложения, а не первого слова
+                val correct = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
+                    .getSpelledPhrase(word, Language.RUSSIAN).misspelledWords.firstOrNull()?.variants?.first() ?: ""
+                if (correct.isNotEmpty()) {
+                    println("$word;$correct;$count")
+                    confirmed++
+                }
+                chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
             }
+        } catch (e: Exception) {
+            flush()
         }
         println()
     }.flush()
-    println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $counter")
+    println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $confirmed")
 }
 
 val exts = setOf(
-    /*"txt",
+    "txt",
     "MF",
     "md",
     "toml",
@@ -93,11 +99,11 @@ val exts = setOf(
     "gitignore",
     "csv",
     "xml",
-    "json",*/
+    "json",
     "kt",
     "kts",
     "java",
-    //"py"
+    "py"
 )
 
 // Какие файлы просматривать
@@ -152,7 +158,7 @@ val extraDictionary = setOf(
 )
 
 fun inExtraDict(word: String) = extraDictionary.any {
-    word.startsWith(it) && word.length - it.length < 4//5.coerceAtMost(word.length / 3)
+    word.startsWith(it) && word.length - it.length < 3
 }
 
 fun allExts(root: File) = sequenceFiles(root)
