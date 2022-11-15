@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("Z:\\igas")
+    val root = File("Z:\\igas\\modules\\gameinfo")
 
     //allExts(root).sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -115,47 +115,8 @@ val extsFilter = { f: File ->
     //.any { f.name.contains(it) }
 }
 
-val extraDictionary = setOf(
-    "рефакторинг",
-    "токен",
-    "перевзвешива",
-    "весовки",
-    "префлоп",
-    "флоп",
-    "постфлоп",
-    "фолд",
-    "блайнд",
-    "рейз",
-    "нейросет",
-    "ривер",
-    "селфпле",
-    "синглтон",
-    "лог",
-    "сериализац",
-    "десериализац",
-    "ситаут",
-    "коллюдер",
-    "шоудаун",
-    "оффлайн",
-    "лимпер",
-    "техчат",
-    "непросчитанных",
-    "коллюдер",
-    "монте-карло",
-    "олл-ин",
-    "тимпле",
-    "быстрокнопк",
-    "раскомментирова",
-    "баттон",
-    "регуляр",
-    "многопотоково",
-    "лимп",
-    "баунд",
-    "стат",
-    "одномастн",
-    "раздач",
-    "патч",
-)
+val extraDictionary = File("extra_dictionary.txt")
+    .readLines().toSet().map { it.trim() }.filter { it.isNotBlank() }
 
 fun inExtraDict(word: String) = extraDictionary.any {
     word.startsWith(it) && word.length - it.length < 3
