@@ -10,12 +10,10 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onComman
 import dev.inmo.tgbotapi.extensions.utils.usernameChatOrNull
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import mastermind.answerSequence
 import mastermind.bc
 import mastermind.evaluate
 import mastermind.hardSelector
-import java.io.File
 
 @Serializable
 data class Config(
@@ -25,13 +23,11 @@ data class Config(
 private const val len = 4
 private const val numAttempts = 7
 
-suspend fun main(args: Array<String>) {
-    // create json to decode config
-    val json = Json { ignoreUnknownKeys = true }
-    // decode config
-    val config: Config = json.decodeFromString(Config.serializer(), File(args.first()).readText())
-    // that is your bot
-    val bot = telegramBot(config.token)
+suspend fun main() {
+    //val json = Json { ignoreUnknownKeys = true }
+    //val config: Config = json.decodeFromString(Config.serializer(), File(args.first()).readText())
+
+    val bot = telegramBot("HIDDEN")
 
     bot.deleteWebhook()
     //bot.setWebhookInfo("https://d5diorr7o385na2g1cc2.apigw.yandexcloud.net")
@@ -39,8 +35,6 @@ suspend fun main(args: Array<String>) {
 
     bot.buildBehaviourWithLongPolling {
         println(getMe())
-
-        val pfpfp = 70
 
         onCommand("start") { content ->
             val curUser = content.chat.usernameChatOrNull()?.username?.username

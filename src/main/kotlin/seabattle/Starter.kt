@@ -2,7 +2,6 @@ package seabattle
 
 fun main() {
     /*val game = Game()
-    //game.arrange(listOf())
 
     while (true) {
         val answer = game.attack(parse(readln()))
@@ -21,4 +20,3 @@ fun main() {
         println(game.secondPlayer.board)
     }*/
 }
-
