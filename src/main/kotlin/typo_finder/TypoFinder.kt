@@ -1,6 +1,8 @@
 package typo_finder
 
-import analmess.*
+import analmess.inDictionary
+import analmess.rusWords
+import analmess.sortedCounter
 import ru.amayakasa.linguistic.YandexSpeller
 import ru.amayakasa.linguistic.parameters.Language
 import ru.amayakasa.linguistic.parameters.ResponseInterface
@@ -21,6 +23,7 @@ fun main() {
 
     val allTypos = mutableListOf<String>()
 
+    val extraDictionary = ExtraDictionary()
     val chatter1 = ProgressChatter {
         println("Обработано $it файлов. Найдено ${allTypos.size} неизвестных слов.")
     }
@@ -33,7 +36,7 @@ fun main() {
             val typoWords = file.bufferedReader()
                 .lineSequence().flatMap { line ->
                     line.rusWords().filterNot {
-                        inExtraDict(it) || it.inDictionary()
+                        it in extraDictionary || it.inDictionary()
                     }
                 }.toList()
 

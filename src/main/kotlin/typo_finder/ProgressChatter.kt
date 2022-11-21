@@ -1,4 +1,4 @@
-package other.typo_finder
+package typo_finder
 
 class ProgressChatter(
     private val period: Int = 100,
