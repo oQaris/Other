@@ -40,9 +40,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
     // Логгер
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.3")
-    implementation("org.slf4j:slf4j-api:2.0.3")
-    implementation("ch.qos.logback:logback-classic:1.4.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
+    implementation("org.slf4j:slf4j-api:2.0.4")
+    implementation("ch.qos.logback:logback-classic:1.4.5")
 }
 
 tasks.test {

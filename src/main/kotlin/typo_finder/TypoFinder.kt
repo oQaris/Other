@@ -3,16 +3,12 @@ package typo_finder
 import analmess.inDictionary
 import analmess.rusWords
 import analmess.sortedCounter
-import ru.amayakasa.linguistic.YandexSpeller
-import ru.amayakasa.linguistic.parameters.Language
-import ru.amayakasa.linguistic.parameters.ResponseInterface
-import ru.amayakasa.linguistic.parameters.Version
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("Z:\\igas")
+    val root = File("Z:/igas/modules/bots")
 
     //allExts(root).sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -65,17 +61,16 @@ fun main() {
 
     var confirmed = 0
     val chatter2 = ProgressChatter(10)
-    File("report_typos.csv").printWriter().apply {
+    val speller = YandexSpellService()
+    File("bots.csv").printWriter().apply {
         println("Total typos:;" + allTypos.size + ';')
         println("Unique typos:;" + allTypos.toSet().size + ';')
         println("Sorted list of typos:;;")
         try {
             allTypos.sortedCounter().forEach { (word, count) ->
-                //todo добавить исправление всего предложения, а не первого слова
-                val correct = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
-                    .getSpelledPhrase(word, Language.RUSSIAN).misspelledWords.firstOrNull()?.variants?.first() ?: ""
-                if (correct.isNotEmpty()) {
-                    println("$word;$correct;$count")
+                val correct = speller.toCorrect(word)
+                if (correct != word) {
+                    println("$word;${correct};$count")
                     confirmed++
                 }
                 chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
