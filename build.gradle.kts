@@ -26,13 +26,8 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.15.3")
     implementation("com.vk.api:sdk:1.0.14")
-    // Телеграм бот
-    implementation("dev.inmo:tgbotapi:3.3.0")
-    implementation("dev.inmo:tgbotapi.core:3.3.0")
-    implementation("dev.inmo:tgbotapi.api:3.3.0")
-    implementation("dev.inmo:tgbotapi.utils:3.3.0")
     // Корутины
-    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // Сериализация
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
@@ -47,7 +42,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs = listOf("-Xmx2048m")
+    jvmArgs = listOf("-Xmx8g")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -55,7 +50,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 application {
-    mainClass.set("mastermind.tgbot.BotKt")
+    mainClass.set("properties_collector.PropertiesCollectorKt")
 }
 
 tasks {
