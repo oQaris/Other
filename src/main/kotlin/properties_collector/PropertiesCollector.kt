@@ -10,7 +10,8 @@ import kotlin.io.path.name
 class PropertiesCollector(
     private val origProps: Path,
     private val exeFile: Path,
-    private val isBackup: Boolean
+    private val isBackup: Boolean = false,
+    private val isFullLog: Boolean = true
 ) {
     private val pattern = "properties([/\\\\][\\w-\\\\.]+)+".toRegex()
     private val origWorkDir = exeFile.absolute().parent.normalize()
@@ -29,16 +30,19 @@ class PropertiesCollector(
 
             var isUpdate = false
             for (line in process.inputStream.bufferedReader().lineSequence()) {
-                val propStr = pattern.find(line)?.value ?: continue
+                if (isFullLog) println(line)
 
+                val propStr = pattern.find(line)?.value ?: continue
                 if (setProps.add(propStr)) {
                     addProperty(propStr)
                         .also { isUpdate = it }
-                        .takeIf { !it } ?: break // если успешно добавили, то перезапускаем
+                        // если успешно добавили, то перезапускаем
+                        .takeIf { !it } ?: break
                 }
             }
-            process.destroyForcibly()
+            process.destroy()
             process.waitFor()
+            deleteDirectory(curWorkDir)
 
             if (!isUpdate) {
                 if (process.exitValue() == 0)
@@ -78,5 +82,12 @@ class PropertiesCollector(
         Files.createDirectories(dest.parent)
         Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING)
         return true
+    }
+
+    private fun deleteDirectory(directory: Path) {
+        Files.walk(directory)
+            .sorted(Comparator.reverseOrder())
+            .map { it.toFile() }
+            .forEach { it.delete() }
     }
 }
