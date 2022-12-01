@@ -31,12 +31,23 @@ fun Iterable<String>.words(): List<String> {
     }.filter { it.isNotEmpty() }
 }
 
+private const val ru = "[А-яЁё]"
+val rusWordRegex = "$ru+(?:-$ru+)*".toRegex()
+val rusSentenceRegex = "$ru+(?:[\\p{P}\\s]+$ru+)*".toRegex()
+
 /**
  * Оставить только слова из русских букв (включая слова через дефис), перевести в нижний регистр.
  */
 fun String.rusWords(): List<String> {
-    val needReg = "[А-яЁё]+(-[А-яЁё]+)?".toRegex()
-    return needReg.findAll(this)
+    return rusWordRegex.findAll(this)
+        .map { it.value }
+        .filter { it.isNotEmpty() }
+        .map { it.lowercase() }
+        .toList()
+}
+
+fun String.rusSentences(): List<String> {
+    return rusSentenceRegex.findAll(this)
         .map { it.value }
         .filter { it.isNotEmpty() }
         .map { it.lowercase() }

@@ -7,27 +7,40 @@ import ru.amayakasa.linguistic.parameters.Version
 import java.io.File
 
 class YandexSpellService(cacheFile: File = File("yandex_cache.csv")) {
-
-    val cacheTrue = cacheFile.readLines()
+    private val speller = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
+    private val cacheTrue = cacheFile.readLines()
         .map { it.split(';').first() }
 
     fun toCorrect(input: String): String {
-        require(!input.contains(" ")) { "Пока доступно только исправление одного слова" }
+        if (input in cacheTrue)
+            return input
 
-        //todo добавить исправление всего предложения, а не первого слова
-        val correct = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
-            .getSpelledPhrase(input, Language.RUSSIAN).misspelledWords.firstOrNull()?.variants?.first() ?: input
+        var process = input
+        var shift = 0
+        speller.getSpelledPhrase(input, Language.RUSSIAN)
+            .misspelledWords.forEach {
+                val corrected = it.variants.first()
+                val start = shift + it.position
+                process = process.replaceRange(
+                    start until start + it.length,
+                    corrected
+                )
+                shift += corrected.length - it.length
+            }
+        return process
+    }
 
-        return correct
+    fun isCorrect(input: String): Boolean {
+        return toCorrect(input) == input
     }
 }
 
 fun main() {
-    val yandexSpellService = YandexSpellService()
-
+    val spellService = YandexSpellService()
     val extraDictionary = ExtraDictionary()
 
-    extraDictionary.extraDictionary.forEach {
-
-    }
+    extraDictionary.extraDictionary
+        .filter { !spellService.isCorrect(it) }
+        .sorted()
+        .forEach { println(it) }
 }

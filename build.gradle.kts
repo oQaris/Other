@@ -50,20 +50,23 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 application {
-    mainClass.set("properties_collector.PropertiesCollectorKt")
+    // ТУТ МЕНЯЕТСЯ СТАРТОВЫЙ КЛАСС ДЛЯ JAR
+    mainClass.set("properties_collector.StarterKt")
 }
 
 tasks {
-    jar {
+    register("fatJar", Jar::class.java) {
+        archiveClassifier.set("all")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
             attributes["Main-Class"] = application.mainClass
         }
-
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        configurations.compileClasspath.get().forEach {
-            from(if (it.isDirectory) it else zipTree(it))
-        }
+        from(configurations.runtimeClasspath.get()
+            .onEach { println("add from dependencies: ${it.name}") }
+            .map { if (it.isDirectory) it else zipTree(it) })
+        val sourcesMain = sourceSets.main.get()
+        sourcesMain.allSource.forEach { println("add from sources: ${it.name}") }
+        from(sourcesMain.output)
     }
 
     compileKotlin {

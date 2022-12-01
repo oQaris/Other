@@ -1,14 +1,12 @@
 package typo_finder
 
-import analmess.inDictionary
-import analmess.rusWords
-import analmess.sortedCounter
+import analmess.*
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("Z:/igas/modules/bots")
+    val root = File("Z:\\igas\\modules\\profiles")
 
     //allExts(root).sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -34,6 +32,9 @@ fun main() {
                     line.rusWords().filterNot {
                         it in extraDictionary || it.inDictionary()
                     }
+                    /*line.rusSentences().filterNot { snt ->
+                        snt.tokens().all { it in extraDictionary || it.inDictionary() }
+                    }*/
                 }.toList()
 
             /*val comments = file.readText()
@@ -62,10 +63,10 @@ fun main() {
     var confirmed = 0
     val chatter2 = ProgressChatter(10)
     val speller = YandexSpellService()
-    File("bots.csv").printWriter().apply {
-        println("Total typos:;" + allTypos.size + ';')
-        println("Unique typos:;" + allTypos.toSet().size + ';')
-        println("Sorted list of typos:;;")
+    File("new.csv").printWriter().apply {
+        //println("Total typos:;" + allTypos.size + ';')
+        //println("Unique typos:;" + allTypos.toSet().size + ';')
+        //println("Sorted list of typos:;;")
         try {
             allTypos.sortedCounter().forEach { (word, count) ->
                 val correct = speller.toCorrect(word)
@@ -76,6 +77,7 @@ fun main() {
                 chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
             }
         } catch (e: Exception) {
+            println(e)
             flush()
         }
         println()
