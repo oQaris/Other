@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     application
 }
 
@@ -19,13 +20,11 @@ dependencies {
     // NLP
     implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
-    implementation(files("/libs/YandexLinguisticBundle-1.1.jar"))
     implementation("net.java.dev.jna:jna:5.12.1")
     implementation("com.alphacephei:vosk:0.3.38")
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.15.3")
-    implementation("com.vk.api:sdk:1.0.14")
     // Корутины
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // Сериализация
@@ -36,17 +35,8 @@ dependencies {
     implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
     // Логгер
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
-    implementation("org.slf4j:slf4j-api:2.0.4")
+    implementation("org.slf4j:slf4j-api:2.0.5")
     implementation("ch.qos.logback:logback-classic:1.4.5")
-}
-
-tasks.test {
-    useJUnitPlatform()
-    jvmArgs = listOf("-Xmx8g")
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
 }
 
 application {
@@ -54,29 +44,38 @@ application {
     mainClass.set("properties_collector.StarterKt")
 }
 
-tasks {
-    register("fatJar", Jar::class.java) {
-        archiveClassifier.set("all")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        manifest {
-            attributes["Main-Class"] = application.mainClass
-        }
-        from(configurations.runtimeClasspath.get()
-            .onEach { println("add from dependencies: ${it.name}") }
-            .map { if (it.isDirectory) it else zipTree(it) })
-        val sourcesMain = sourceSets.main.get()
-        sourcesMain.allSource.forEach { println("add from sources: ${it.name}") }
-        from(sourcesMain.output)
-    }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+}
 
-    compileKotlin {
-        kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.ExperimentalStdlibApi"
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.guardsquare:proguard-gradle:7.3.0") {
+            exclude("com.android.tools.build")
+        }
     }
 }
 
-/*tasks.withType<Test> {
-    minHeapSize = "512m"
-    maxHeapSize = "32768m"
-    jvmArgs = listOf("-XX:MaxPermSize=32768m")
-}*/
+tasks.jar { enabled = false }
+artifacts.archives(tasks.shadowJar)
+
+tasks.shadowJar {
+    archiveFileName.set(rootProject.name + ".jar")
+    minimize()
+}
+
+tasks.register<proguard.gradle.ProGuardTask>("proguard") {
+    //keep("me.oqaris."+application.mainClass.get())
+    configuration("proguard-rules.pro")
+}
+
+// автоматически запускать задачу proguard после сборки
+tasks.shadowJar.get().finalizedBy(tasks.getByName("proguard"))
+
+tasks.test {
+    useJUnitPlatform()
+    jvmArgs = listOf("-Xmx8g")
+}
