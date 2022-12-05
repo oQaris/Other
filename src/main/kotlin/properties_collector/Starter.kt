@@ -8,7 +8,7 @@ import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     val help = """
-        args[0] - executable file (exe, bat, cmd, etc.)
+        args[0] - executable file (exe, bat, cmd, jar, etc.)
         args[1] - original folder 'properties'
         args[2] - true if for each new launch it is required to copy the folder 
                   where the executable file is located (default is false).
@@ -16,7 +16,7 @@ fun main(args: Array<String>) {
                   program to the current console. (default is true).
         """.trimIndent()
     try {
-        check(args.size in 2..3) { help }
+        check(args.size in 2..4) { help }
         val origProps = Path(args[1])
         check(origProps.name == "properties" && origProps.exists())
         { "${origProps.absolute()} is not valid" }

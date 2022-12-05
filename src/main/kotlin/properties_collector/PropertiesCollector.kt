@@ -18,10 +18,16 @@ class PropertiesCollector(
     private val setProps = mutableSetOf<String>()
 
     fun run() {
+        var firstStart = true
         while (true) {
+
             val curWorkDir = if (isBackup) cloneWorkDir(origWorkDir) else origWorkDir
-            val command = curWorkDir.resolve(exeFile.fileName).normalize().toString()
-            println(command)
+            val curExeFile = curWorkDir.resolve(exeFile.fileName).normalize()
+            val command = prepareCommand(curExeFile)
+            if (firstStart) {
+                println("$command in $curWorkDir")
+                firstStart = false
+            }
 
             val process = ProcessBuilder(command)
                 .directory(curWorkDir.toFile())
@@ -42,7 +48,8 @@ class PropertiesCollector(
             }
             process.destroy()
             process.waitFor()
-            deleteDirectory(curWorkDir)
+            if (isBackup)
+                deleteDirectory(curWorkDir)
 
             if (!isUpdate) {
                 if (process.exitValue() == 0)
@@ -89,5 +96,14 @@ class PropertiesCollector(
             .sorted(Comparator.reverseOrder())
             .map { it.toFile() }
             .forEach { it.delete() }
+    }
+
+    private fun prepareCommand(curExeFile: Path): List<String> {
+        if (curExeFile.name.endsWith(".jar"))
+            return listOf("java", "-jar", curExeFile.toString())
+        /*if (curExeFile.name.endsWith(".txt"))
+            return curExeFile.bufferedReader().readLine()
+                .split("\\s".toRegex()).filter { it.isNotBlank() }*/
+        return listOf(curExeFile.toString())
     }
 }
