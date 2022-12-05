@@ -42,11 +42,10 @@ class PropertiesCollector(
                 if (setProps.add(propStr)) {
                     addProperty(propStr)
                         .also { isUpdate = it }
-                        // если успешно добавили, то перезапускаем
-                        .takeIf { !it } ?: break
+                        // если успешно добавили, то завершаем процесс, но дочитываем из выходного потока
+                        .takeIf { !it } ?: process.destroy()
                 }
             }
-            process.destroy()
             process.waitFor()
             if (isBackup)
                 deleteDirectory(curWorkDir)
