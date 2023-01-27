@@ -16,8 +16,9 @@ fun main(args: Array<String>) {
     try {
         check(args.size in 2..4) { help }
         val origProps = File(args[1])
-        check(origProps.name == "properties" && origProps.exists())
-        { "${origProps.absolutePath} is not valid" }
+        check(origProps.name == "properties" && origProps.exists()) {
+            "${origProps.absolutePath} is not valid"
+        }
 
         val exeFile = Path.of(args[0])
         val isBackup = if (args.size >= 3) args[2].toBoolean() else false

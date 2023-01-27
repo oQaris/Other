@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("Z:\\igas\\modules\\profiles")
+    val root = File("Z:\\igas\\modules")
 
     //allExts(root).sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -65,7 +65,7 @@ fun main() {
     var confirmed = 0
     val chatter2 = ProgressChatter(10)
     val speller = YandexSpellService()
-    File("new.csv").printWriter().apply {
+    File("all.csv").printWriter().apply {
         //println("Total typos:;" + allTypos.size + ';')
         //println("Unique typos:;" + allTypos.toSet().size + ';')
         //println("Sorted list of typos:;;")

@@ -24,7 +24,8 @@ val exts = setOf(
 // Какие файлы просматривать
 val extsFilter = { f: File ->
     // с такими расширениями
-    exts.any { f.name.endsWith(".$it") }
+    //exts.any { f.name.endsWith(".$it") }
+    true
     // без такого в названии
     //&& setOf("values")
     //.any { f.name.contains(it) }
