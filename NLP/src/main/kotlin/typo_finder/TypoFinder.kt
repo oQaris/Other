@@ -65,7 +65,7 @@ fun main() {
     var confirmed = 0
     val chatter2 = ProgressChatter(10)
     val speller = YandexSpellService()
-    File("all.csv").printWriter().apply {
+    File("typos.csv").printWriter().apply {
         //println("Total typos:;" + allTypos.size + ';')
         //println("Unique typos:;" + allTypos.toSet().size + ';')
         //println("Sorted list of typos:;;")
