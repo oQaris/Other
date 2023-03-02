@@ -24,9 +24,18 @@ fun Iterable<String>.words(): List<String> {
     }.filter { it.isNotEmpty() }
 }
 
-private const val ru = "[А-яЁё]"
+const val en = "[A-z]"
+const val ru = "[А-яЁё]"
 val rusWordRegex = "$ru+(?:-$ru+)*".toRegex()
 val rusSentenceRegex = "$ru+(?:[\\p{P}\\s]+$ru+)*".toRegex()
+
+fun String.findBy(regex: Regex): List<String>{
+    return regex.findAll(this)
+        .map { it.value }
+        .filter { it.isNotEmpty() }
+        .map { it.lowercase() }
+        .toList()
+}
 
 /**
  * Оставить только слова из русских букв (включая слова через дефис), перевести в нижний регистр.

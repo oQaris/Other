@@ -1,20 +1,38 @@
 package typo_finder
 
+import en
+import ru
 import rusWords
 import sortedCounter
+import findBy
 import java.io.File
 
 fun main() {
-    searchDuplicateClass()
+    searchBy(::enRusWords)
 }
 
-fun searchByRegex() {
+fun customRegex(file: File): List<String> {
+    return "\\S*счит\\S*".toRegex()
+        .findAll(file.readText())
+        .flatMap { it.value.rusWords() }
+        .toList()
+}
+
+fun enRusWords(file: File): List<String> {
+    return file.readText()
+        .findBy("(?i:[a-za-яё])+".toRegex())
+        .filter { word ->
+            word.contains(ru.toRegex())
+                    && word.contains(en.toRegex())
+        }.toList()
+}
+
+fun searchBy(handler: (File) -> (List<String>)) {
     val results = mutableListOf<String>()
-    sequenceFiles(File("Z:\\igas"), extsFilter).forEach { file ->
-        results += "\\S*счит\\S*".toRegex()
-            .findAll(file.readText())
-            .flatMap { it.value.rusWords() }
-    }
+    sequenceFiles(File("Z:\\igas"), extsFilter)
+        .forEach { file ->
+            results += handler.invoke(file)
+        }
     results.sortedCounter()
         .forEach { println(it.first) }
 }
