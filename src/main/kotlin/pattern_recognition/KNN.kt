@@ -118,7 +118,7 @@ fun main() {
     val knn = KNN(1, globalData)
     globalData.forEach { orig ->
         Array(100) {
-            knn.search(orig.data.noise(0.3f), ::manhattan)
+            knn.search(orig.data.noise(0.0f), ::cosine)
         }.toList().sortedCounter()
             .also { println(it) }
     }
