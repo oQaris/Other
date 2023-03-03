@@ -3,7 +3,7 @@ package typo_finder
 import en
 import ru
 import rusWords
-import sortedCounter
+import processors.sortedCounter
 import findBy
 import java.io.File
 

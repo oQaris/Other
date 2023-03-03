@@ -20,11 +20,6 @@ fun manhattan(v1: Data, v2: Data) =
         abs(it.first - it.second)
     }.toDouble()
 
-fun manhattan(v1: Data, v2: Data) =
-    v1.zip(v2).sumOf {
-        abs(it.first - it.second)
-    }.toDouble()
-
 fun euclidean(v1: Data, v2: Data) =
     v1.zip(v2).sumOf {
         (it.first - it.second).toDouble().pow(2)

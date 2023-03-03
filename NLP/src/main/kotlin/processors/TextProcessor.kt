@@ -1,6 +1,8 @@
 import com.github.demidko.aot.PartOfSpeech
 import com.github.demidko.aot.PartOfSpeech.*
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
+import processors.isURL
+import processors.maxsByCount
 
 /**
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр

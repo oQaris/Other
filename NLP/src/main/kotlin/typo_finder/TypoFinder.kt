@@ -2,7 +2,7 @@ package typo_finder
 
 import inDictionary
 import rusWords
-import sortedCounter
+import processors.sortedCounter
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -10,7 +10,7 @@ fun main() {
     // Какую директорию перебирать
     val root = File("Z:\\igas\\modules")
 
-    //allExts(root).sortedCounter()
+    //allExts(root).processors.sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
 
     var timeMark = System.currentTimeMillis()
