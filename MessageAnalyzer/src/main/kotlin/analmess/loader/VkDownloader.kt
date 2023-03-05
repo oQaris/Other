@@ -73,4 +73,8 @@ class VkDownloader(myId: Int, token: String, private val chatId: Int) : Loader {
             attachments = vkMess.attachments.map { Media(it.type?.toString() ?: "null") },
             durationSeconds = vkMess.attachments.firstOrNull { it.type == MessageAttachmentType.AUDIO_MESSAGE }?.audioMessage?.duration
         )
+
+    fun voiceToText() {
+        //todo
+    }
 }

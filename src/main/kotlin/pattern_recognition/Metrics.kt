@@ -25,13 +25,13 @@ fun euclidean(v1: Data, v2: Data) =
         (it.first - it.second).toDouble().pow(2)
     }.let { sqrt(it) }
 
-fun chebyshev(v1: Data, v2: Data) =
-    v1.zip(v2).maxOf { abs(it.first - it.second) }.toDouble()
-
 fun distance(v1: Data, v2: Data) =
     v1.zip(v2).count { it.first!=it.second }.toDouble()
 
+fun chebyshev(v1: Data, v2: Data) =
+    v1.zip(v2).maxOf { abs(it.first - it.second) }.toDouble()
 
+// Метрика направления
 
 fun cosine(v1: Data, v2: Data) = v1.zip(v2).run {
     acos(sumOf { it.first * it.second } /

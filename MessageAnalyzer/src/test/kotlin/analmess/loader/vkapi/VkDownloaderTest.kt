@@ -7,7 +7,7 @@ internal class VkDownloaderTest {
 
     private val api = VkDownloader(
         254878066,
-        "1fb6cda9ba3f0c45cbf9fcb7d766b1dbd94cb593d148127e89da54ed31095996f2e3ec4c6f1627194d521",
+        "vk1.a.1JtSHgIFvuJxKNyIgIxZkmoWHMsUOFrvKAtG2X7JAnyoziDNFT-PIExRGXix9Gu6-32kNKSW7vHRLCaxyKetZ7pjL7xHsHsW3Vc7gtfuC0WVPSgdDWktaNNWoHlUzjdOKEEquUCjpTItgcaa0j7i-74_Yf4fWERF6adMosHWJ96d_5flw4f09Z_fE_Lv6SGUTBOv5WC6r-oLjJuYNSTd9g",
         587172110
     )
 
