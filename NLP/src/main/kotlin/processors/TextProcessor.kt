@@ -3,6 +3,7 @@ import com.github.demidko.aot.PartOfSpeech.*
 import com.github.demidko.aot.WordformMeaning.lookupForMeanings
 import processors.isURL
 import processors.maxsByCount
+import processors.sortedCounter
 
 /**
  * Разделить по белому пространству и знакам препинания (кроме ссылок), перевести в нижний регистр
@@ -108,6 +109,12 @@ fun String.inDictionary() = lookupForMeanings(this).isNotEmpty()
  */
 fun String.partsOfSpeech() = lookupForMeanings(this)
     .map { it.partOfSpeech.description }.maxsByCount()
+
+fun nGramm(text: String, n: Int): Map<String, Int> {
+    return text.tokens().words().fold(mapOf()) { acc, s ->
+        acc + s.windowed(n).sortedCounter().toMap()
+    }
+}
 
 fun printInfoFromWord(word: String) {
     println(word)

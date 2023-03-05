@@ -115,11 +115,24 @@ class KNN(private val k: Int, private val dataset: Set<Item>) {
 }
 
 fun main() {
+    val iter = 1_000_00
     val knn = KNN(1, globalData)
+    val metrics = listOf<Metric>(::manhattan, ::euclidean, ::chebyshev, ::distance, ::cosine)
+        .associateWith { mutableMapOf<Clazz, MutableList<Clazz>>() }
+
     globalData.forEach { orig ->
-        Array(100) {
-            knn.search(orig.data.noise(0.0f), ::cosine)
-        }.toList().sortedCounter()
-            .also { println(it) }
+        repeat(1_000_00) {
+            val input = orig.data.noise(0.4f)
+            metrics.forEach { (metric, table) ->
+                table.putIfAbsent(orig.clazz, mutableListOf())
+                table[orig.clazz]!!.add(knn.search(input, metric))
+            }
+        }
+    }
+
+    metrics.forEach { (metric, table) ->
+        println(metric.toString().dropLast(37))
+        table.mapValues { it.value.sortedCounter() }.entries.forEach { println(it) }
+        println()
     }
 }

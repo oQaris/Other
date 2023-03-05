@@ -11,12 +11,15 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import partsOfSpeech
 import printInfoFromWord
+import rusWords
 import tokens
-import voiceToText
+import typo_finder.YandexSpellService
 import java.io.File
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
-const val jsonPath = "C:/Users/oQaris/Desktop/Telegram Desktop/Polina/result.json"
+const val jsonPath = "C:\\Users\\oQaris\\Desktop\\Telegram Desktop\\Milka\\chat.json"
 const val topCount = 20
 
 val loader: Loader = TgParser(File(jsonPath))
@@ -43,8 +46,8 @@ fun loadChat(fileName: String) =
 
 
 fun main() {
-    voiceToText()
-    return
+    /*voiceToText()
+    return*/
 
     /*val freqByUser = wordsFrequency(userToMessages["Артём Мухамед-Каримов"]!!)
     freqByUser.filter { it.count > 1 }.map { it.lemma }.toSet()
@@ -126,15 +129,26 @@ fun userSummary() {
     println("- Популярные слова по пользователям:")
     printTableByColumns {
         userToMessages.entries.forEach { (user, messages) ->
-            val freqByUser = wordsFrequency(messages).take(topCount)
+            val freqByUser = wordsFrequency(messages)
             add(user, buildTableByRows(freqByUser).formattedRows())
+        }
+    }
+
+    println("- Биграммы:")
+    printTableByColumns {
+        userToMessages.entries.forEach { (user, messages) ->
+            val bigrByUser = messages.flatMap {
+                it.text.simpleText().rusWords()
+            }.flatMap { it.windowed(3) }
+                .sortedCounter()
+            add(user, buildTableByRows(bigrByUser).formattedRows())
         }
     }
 
     println("- Любимые смайлики:")
     printTableByColumns {
         userToMessages.entries.forEach { (user, messages) ->
-            val freqByUser = emojiFrequency(messages).take(topCount)
+            val freqByUser = emojiFrequency(messages)
             add(user, buildTableByRows(freqByUser).formattedRows())
         }
     }
@@ -191,6 +205,15 @@ fun tableWords() {
         add(
             "Неизвестных слов",
             vocabulary.values.map { it.second.size }
+        )
+        add(
+            "Из них опечаток",
+            YandexSpellService().run {
+                /*vocabulary.values.map { (_, noDic) ->
+                    noDic.count { isCorrect(it) }
+                }*/
+                vocabulary.values.map { countMisspelled(it.second) }
+            }
         )
     }
 }
@@ -255,22 +278,23 @@ fun tableVoiceMessages() {
         )
         add(
             "Общая длина ГС",
-            userToDurationVoiceMessages.values.map { durs -> durs.sumOf { it } }
+            userToDurationVoiceMessages.values.map { durs -> durs.sumOf { it }.toDuration() }
         )
         add(
             "Max длина ГС",
-            userToDurationVoiceMessages.values.map { durs -> durs.maxOfOrNull { it } ?: emptyToken }
+            userToDurationVoiceMessages.values.map { durs -> durs.maxOfOrNull { it }.toDuration() }
         )
         add(
             "Min длина ГС",
-            userToDurationVoiceMessages.values.map { durs -> durs.minOfOrNull { it } ?: emptyToken }
+            userToDurationVoiceMessages.values.map { durs -> durs.minOfOrNull { it }.toDuration() }
         )
         add(
             "Avg длина ГС",
             userToDurationVoiceMessages.values.map { durs ->
                 if (durs.isEmpty()) return@map emptyToken
                 //todo mean
-                durs.reduce { acc, dur -> acc + dur } / durs.size
+                durs.map { it.toDuration() }
+                    .reduce { acc, dur -> acc + dur } / durs.size
             }
         )
         add(
@@ -278,11 +302,14 @@ fun tableVoiceMessages() {
             userToDurationVoiceMessages.values.map { durs ->
                 if (durs.isEmpty()) return@map emptyToken
                 //todo median
-                durs.sorted()[durs.size / 2]
+                durs.map { it.toDuration() }
+                    .sorted()[durs.size / 2]
             }
         )
     }
 }
+
+fun Int?.toDuration() = (this ?: 0).toDuration(DurationUnit.SECONDS)
 
 fun tableMediaType() {
     val userToMediaTypeWithFrequency = userToMessages
@@ -298,6 +325,7 @@ fun tableMediaType() {
     }
 }
 
+//todo чё намудрил то
 fun tablePartsOfSpeech() {
     val userToPartsOfSpeechWithFrequency = userToMessages
         .mapValues { entry ->
@@ -344,13 +372,13 @@ fun printTableByColumns(content: Table.Builder.Appender.() -> Unit) {
 
 fun buildTableByRows(freqByUser: List<WordsFrequency>) =
     Table.with(padding = 1, appender = ::RowsAppender, append = {
-        freqByUser.forEach { add(listOf(it.lemma, it.count, it.formatOrig())) }
+        freqByUser.take(topCount).forEach { add(listOf(it.lemma, it.count, it.formatOrig())) }
     })
 
 @JvmName("buildTableByRowsPair")
 fun buildTableByRows(freqByUser: List<Pair<Any, Int>>) =
     Table.with(padding = 1, appender = ::RowsAppender, append = {
-        freqByUser.forEach { add(listOf(it.first, it.second)) }
+        freqByUser.take(topCount).forEach { add(listOf(it.first, it.second)) }
     })
 
 fun userToDurationAnswer(messages: List<Message>): List<Pair<String, Duration>> = buildList {
