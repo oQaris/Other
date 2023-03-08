@@ -12,7 +12,7 @@ val rusData = listOf(
     prepareNGrams(2, true),
     prepareNGrams(3, true),
     prepareNGrams(4, true)
-)
+).map { it.normalize() }
 /*val monogramsRus = prepareNGrams(1, true)
 val bigramsRus = prepareNGrams(2, true)
 val trigramsRus = prepareNGrams(3, true)
@@ -24,7 +24,7 @@ val engData = listOf(
     prepareNGrams(2, false),
     prepareNGrams(3, false),
     prepareNGrams(4, false)
-)
+).map { it.normalize() }
 
 // Логарифмическая Фитнес-функция
 

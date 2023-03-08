@@ -88,8 +88,8 @@ internal class DecoderTest {
     @Test
     fun encodedNGramTest2() {
         val alph = ('a'..'z').toList()
-        val enc = encodeNGram(alph, "abcd")
+        val enc = encodeNGram(alph, "tion")
         val dec = decodeNGram(alph, enc, 4)
-        Assertions.assertEquals("abcd", dec)
+        Assertions.assertEquals("tion", dec)
     }
 }

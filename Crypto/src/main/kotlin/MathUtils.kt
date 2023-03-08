@@ -1,4 +1,3 @@
-import java.io.File
 import kotlin.math.pow
 
 fun countNGram(alphabet: List<Char>, n: Int) =
@@ -32,3 +31,5 @@ fun Int.fromDecimalSystem(k: Int) = buildList {
 
 @Suppress("NOTHING_TO_INLINE") // see DecoderTest.powBenchmark
 inline fun Int.pow(exp: Int) = this.toDouble().pow(exp).toInt()
+
+fun <T : Number> Collection<T>.mean() = sumOf { it.toDouble() } / size
