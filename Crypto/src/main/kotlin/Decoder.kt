@@ -1,42 +1,56 @@
 import java.io.File
 import java.nio.charset.Charset
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
-class Decoder(private val alphabet: List<Char>, private val origText: String, language: String = "russian") {
-    //private val rnd = Random(43)
+class Decoder(
+    private val alphabet: List<Char>,
+    private val origText: String,
+    private val language: String = "russian"
+) {
     private val ciphertext = prepareText(origText, alphabet)
-    private var iteratedKeys = 0.0
     private val cash = createCash()
     private val fitness = NormLogFitness(4, language)
 
+    private fun printParams(){
+
+    }
+
+    @OptIn(ExperimentalTime::class)
     fun breakCipher(maxRounds: Int = 1000, consolidate: Int = 3) {
         var localMax = Double.NEGATIVE_INFINITY
         var maxHit = 0
         var bestKey = alphabet.toList()
 
-        //println("fitness, time, iter")
+        println("fitness           time        iter")
+        val populations = populationSequence().iterator()
         for (round in 0..maxRounds) {
-            val key = alphabet.shuffled()
-            //measureTimeMillis {
-            val (localBestKey, fitness) = hillClimbing(key)
-            println("$fitness ")
+            val key = populations.next()
+            val (timedValue, time) = measureTimedValue {
+                hillClimbing(key)
+            }
+            val (localBestKey, fitness, iteratedKeys) = timedValue
+            println("$fitness $time $iteratedKeys")
             if (fitness > localMax) {
                 localMax = fitness
                 bestKey = localBestKey
-
-                //val newText = decodeWith(ciphertext, bestKey)
-                //println(newText)
             } else if (fitness == localMax) {
-                maxHit++
-                if (maxHit == consolidate)
+                if (maxHit++ == consolidate)
                     break
             }
-            //}.also { print(it) }
-            //println(" $iteratedKeys")
-            iteratedKeys = 0.0
         }
-
+        println(bestKey)
         val newText = decodeWith(origText, bestKey)
         println(newText)
+    }
+
+    data class BreakerInfo(val key: List<Char>, val fitness: Double, val iterated: Int)
+
+    //todo
+    private fun populationSequence() = sequence<List<Char>> {
+        while (true) {
+            yield(alphabet.shuffled())
+        }
     }
 
     /**
@@ -50,16 +64,18 @@ class Decoder(private val alphabet: List<Char>, private val origText: String, la
         }.toTypedArray()
     }
 
-    private fun hillClimbing(startKey: List<Char>): Pair<List<Char>, Double> {
+    private fun hillClimbing(startKey: List<Char>): BreakerInfo {
         val keyLen = startKey.size
         val key = startKey.toMutableList()
-        var plaintext = ciphertext.toString()
+        val plaintext = StringBuilder(decodeWith(ciphertext, key))
         var maxFitness = Double.NEGATIVE_INFINITY
+        var iteratedKeys = 0
         var wasUpdateKey = true
 
         while (wasUpdateKey) {
             wasUpdateKey = false
-            for (idx1 in 0 until keyLen) {
+            //todo + 00
+            for (idx1 in 0 until keyLen - 1) {
                 for (idx2 in idx1 + 1 until keyLen) {
                     val ch1 = key[idx1]
                     val ch2 = key[idx2]
@@ -70,12 +86,11 @@ class Decoder(private val alphabet: List<Char>, private val origText: String, la
                     key[idx1] = ch1
                     key[idx2] = ch2
 
-//                    val tmpText = StringBuilder(plaintext)
 //                    for (idx in cash[alphabet.indexOf(ch1)]) {
-//                        tmpText[idx] = ch2
+//                        plaintext[idx] = ch2
 //                    }
 //                    for (idx in cash[alphabet.indexOf(ch2)]) {
-//                        tmpText[idx] = ch1
+//                        plaintext[idx] = ch1
 //                    }
 
                     /*var tmpFitness = 0.0
@@ -87,22 +102,22 @@ class Decoder(private val alphabet: List<Char>, private val origText: String, la
 
                     if (tmpFitness > maxFitness) {
                         maxFitness = tmpFitness
-                        plaintext = tmpText.toString()
                         wasUpdateKey = true
                         key[idx1] = ch2
                         key[idx2] = ch1
-                    } /*else if (tmpFitness < maxFitness) {
-                        for (idx in cash[alphabet.indexOf(ch1)]) {
-                            plaintext[idx] = ch1
-                        }
-                        for (idx in cash[alphabet.indexOf(ch2)]) {
-                            plaintext[idx] = ch2
-                        }
-                    }*/
+                    }
+//                    } else /*if (tmpFitness < maxFitness) */ {
+//                        for (idx in cash[alphabet.indexOf(ch1)]) {
+//                            plaintext[idx] = ch1
+//                        }
+//                        for (idx in cash[alphabet.indexOf(ch2)]) {
+//                            plaintext[idx] = ch2
+//                        }
+//                    }
                 }
             }
         }
-        return key to maxFitness
+        return BreakerInfo(key, maxFitness, iteratedKeys)
     }
 
     private fun decodeWith(text: CharSequence, key: List<Char>): String {
@@ -124,6 +139,7 @@ fun main() {
 
     Decoder(alphabet1, text1).breakCipher()
     println()
+    return
 
     // Вариант 2 - символы не из всего алфавита, английский текст
     val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
