@@ -1,65 +1,109 @@
-import kotlin.math.abs
-import kotlin.math.log10
+import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 typealias NGrams = Map<String, Double>
 
-// ----------- Кеш ----------- //
-// Русские
-val rusData = listOf(
-    prepareNGrams(1, true),
-    prepareNGrams(2, true),
-    prepareNGrams(3, true),
-    prepareNGrams(4, true)
-).map { it.normalize() }
-/*val monogramsRus = prepareNGrams(1, true)
-val bigramsRus = prepareNGrams(2, true)
-val trigramsRus = prepareNGrams(3, true)
-val quadgramsRus = prepareNGrams(4, true)*/
-
-// Английские
-val engData = listOf(
-    prepareNGrams(1, false),
-    prepareNGrams(2, false),
-    prepareNGrams(3, false),
-    prepareNGrams(4, false)
-).map { it.normalize() }
-
-// Логарифмическая Фитнес-функция
-
-val fNormal = logFitness(engData[3])
-
-fun logQuadgramFitness(text: CharSequence): Double {
-    val localQuadgram = searchNGrams(text, 4)
-    val f = logFitness(localQuadgram)
-    return abs(f - fNormal) / fNormal
+enum class Language {
+    RUS, ENG, DAN, FIN, FRA, DEU, ISL, POL, SPA, SWE
 }
-
-fun logFitness(nGram: NGrams): Double {
-    return nGram.values.sumOf { log10(it) } / nGram.size
-}
-
-// Вероятностная Фитнес-функция
-
-val weights = listOf(1.0 / 5, 13.0 / 60, 1.0 / 4, 1.0 / 3)
 
 /**
- * Используется взвешеная Евклидова метрика.
- * Сравненние с эталонным распределением частот по 1-4 граммам.
- * Ближе к 0 - лучше.
+ * Оценка текста на пригодность на основе эталонных частот n-грамм выбранного языка.
+ * http://practicalcryptography.com/cryptanalysis/letter-frequencies-various-languages/
  */
-fun pFitness(text: CharSequence, isRus: Boolean): Double {
-    val data = if (isRus) rusData else engData
-    var result = 0.0
-    data.forEachIndexed { i, gram ->
-        result += delta(gram, searchNGrams(text, i + 1)) * weights[i]
-    }
-    return result
+interface Fitness {
+    fun fitValue(text: CharSequence): Double
 }
 
-fun delta(ng1: NGrams, ng2: NGrams): Double {
-    return ng1.entries.sumOf { (gram, p) ->
-        ((ng2[gram] ?: 0.0) - p).pow(2)
-    }.let { sqrt(it) }
+class EuclidWeightFitness(lang: String) : Fitness {
+
+    private val weights = listOf(1.0 / 5, 13.0 / 60, 1.0 / 4, 1.0 / 3)
+
+    val alphabet = prepareNGrams(1, lang).keys.map { it.toCharArray()[0] }.sorted()
+
+    private val probabilities = listOf(1, 2, 3, 4)
+        .associateWith { n ->
+            val nGrams = prepareNGrams(n, lang)
+            DoubleArray(countNGram(alphabet, n)) {
+                nGrams[decodeNGram(alphabet, it, n)]!!
+            }
+        }
+
+    /**
+     * Используется взвешенная Евклидова метрика.
+     * Сравнение с эталонным распределением частот по 1-4 граммам.
+     * Ближе к 1 - лучше.
+     */
+    override fun fitValue(text: CharSequence): Double {
+        var result = 0.0
+        //todo
+        /*probabilities.forEach { n, prob ->
+            encodedNGramsSeq(alphabet, text, n).map { idx ->
+                prob[idx]
+            }.toList().mean()
+            result+=
+        }
+
+        probabilities.forEachIndexed { i, gram ->
+            result += delta(gram, searchNGrams(text, i + 1)) * weights[i]
+        }*/
+        return result
+    }
+
+    private fun delta(ng1: NGrams, ng2: NGrams): Double {
+        return ng1.entries.sumOf { (gram, p) ->
+            ((ng2[gram] ?: 0.0) - p).pow(2)
+        }.let { sqrt(it) }
+    }
+
+    private fun normalize(input: Map<String, Double>): Map<String, Double> {
+        val sum = input.values.sumOf { it }
+        return input.mapValues { it.value / sum }
+    }
+}
+
+
+class NormLogFitness(private val n: Int, lang: String) : Fitness {
+
+    private val nGrams = prepareNGrams(n, lang)
+
+    val alphabet = nGrams.keys.flatMapTo(mutableSetOf()) {
+        it.toCharArray().asIterable()
+    }.sorted()
+
+    val fitnessData = DoubleArray(countNGram(alphabet, n))
+
+    init {
+        nGrams.forEach { (gram, count) ->
+            fitnessData[encodeNGram(alphabet, gram)] = count
+        }
+
+        val sum = fitnessData.sum()
+        val positiveMin = fitnessData.asSequence()
+            .filter { it > 0 }.minOf { it }
+        val offset = ln(positiveMin / 10 / sum)
+
+        var norm = 0.0
+        for (i in fitnessData.indices) {
+            if (fitnessData[i] > 0) {
+                val prop = fitnessData[i] / sum
+                val new = ln(prop) - offset
+                fitnessData[i] = new
+                norm += (prop * new)
+            }
+        }
+        for (i in fitnessData.indices) {
+            fitnessData[i] = fitnessData[i] / norm
+        }
+    }
+
+    /**
+     * Вычисляет значение фитнес-функции для заданного текста.
+     * Ближе к 1 - лучше.
+     */
+    override fun fitValue(text: CharSequence) =
+        encodedNGramsSeq(alphabet, text, n).map { idx ->
+            fitnessData[idx]
+        }.toList().mean()
 }

@@ -1,19 +1,5 @@
 import kotlin.math.pow
 
-fun countNGram(alphabet: List<Char>, n: Int) =
-    alphabet.size.pow(n)
-
-fun encodeNGram(alphabet: List<Char>, strGram: CharSequence): Int =
-    strGram.map { alphabet.indexOf(it) }
-        .toDecimalSystem(alphabet.size)
-
-fun decodeNGram(alphabet: List<Char>, codeGram: Int, n: Int): String {
-    return codeGram.fromDecimalSystem(alphabet.size)
-        .map { alphabet[it] }
-        .joinToString("")
-        .padStart(n, alphabet[0])
-}
-
 fun List<Int>.toDecimalSystem(k: Int): Int {
     return asReversed().foldIndexed(0) { index, acc, value ->
         require(value < k)

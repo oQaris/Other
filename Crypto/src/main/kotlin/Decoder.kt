@@ -1,12 +1,12 @@
 import java.io.File
 import java.nio.charset.Charset
 
-class Decoder(private val alphabet: List<Char>, private val origText: String) {
+class Decoder(private val alphabet: List<Char>, private val origText: String, language: String = "russian") {
     //private val rnd = Random(43)
     private val ciphertext = prepareText(origText, alphabet)
     private var iteratedKeys = 0.0
     private val cash = createCash()
-    private val quadgram = normalizedNGramArr(4, alphabet, IS_RUS)
+    private val fitness = NormLogFitness(4, language)
 
     fun breakCipher(maxRounds: Int = 1000, consolidate: Int = 3) {
         var localMax = Double.NEGATIVE_INFINITY
@@ -50,16 +50,6 @@ class Decoder(private val alphabet: List<Char>, private val origText: String) {
         }.toTypedArray()
     }
 
-    fun test() {
-        quadgram.mapIndexed { index, d ->
-            decodeNGram(alphabet, index, 4) to d
-        }.sortedByDescending { it.second }
-            .take(100)
-            .forEach { (t, u) ->
-                println("$t -> $u")
-            }
-    }
-
     private fun hillClimbing(startKey: List<Char>): Pair<List<Char>, Double> {
         val keyLen = startKey.size
         val key = startKey.toMutableList()
@@ -92,7 +82,7 @@ class Decoder(private val alphabet: List<Char>, private val origText: String) {
                     encodedNGramsSeq(plaintext, 4).forEach { quadIdx ->
                         tmpFitness += quadgram[quadIdx]
                     }*/
-                    val tmpFitness = fitValue(prepareText(tmpText, RUS_ALPHABET))
+                    val tmpFitness = fitness.fitValue(tmpText)
                     iteratedKeys++
 
                     if (tmpFitness > maxFitness) {
@@ -115,64 +105,34 @@ class Decoder(private val alphabet: List<Char>, private val origText: String) {
         return key to maxFitness
     }
 
-    fun fitValue(text: CharSequence) =
-        //-pFitness(text, false)
-        encodedNGramsSeq(text, 4).map { quadIdx ->
-            quadgram[quadIdx]
-        }.toList().mean()
-
-    fun decodeWith(text: CharSequence, key: List<Char>): String {
+    private fun decodeWith(text: CharSequence, key: List<Char>): String {
         val bijection = alphabet.zip(key).toMap()
         return text.map { bijection[it] ?: it }
             .joinToString("")
     }
-
-    /**
-     * Формирует n-граммы и кодирует их в K-ричную систему, где K - размер алфавита,
-     * затем преобразует их в 10-ичную систему, возвращая последовательность (для оптимизации).
-     */
-    private fun encodedNGramsSeq(text: CharSequence, n: Int) =
-        text.windowedSequence(n) { gram ->
-            encodeNGram(alphabet, gram)
-        }
 }
 
-fun prepareText(text: String, alphabet: List<Char>) =
-    StringBuilder().apply {
-        text.lowercase()
-            .filter { it in alphabet }
-            .forEach { append(it) }
-    }
-
-val RUS_ALPHABET = rusData[0].keys.map { it.toCharArray()[0] }.sorted()
-val ENG_ALPHABET = engData[0].keys.map { it.toCharArray()[0] }.sorted()
-
-const val IS_RUS = true
 
 fun main() {
-    println("Heap max size: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
-    val lang = if (IS_RUS) (RUS_ALPHABET + ' ') else ENG_ALPHABET
-    println("alpabet: $lang")
+    println("Heap max size: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB")
 
-    val text = File("08.txt").readText(Charset.forName("Windows-1251")).lowercase()
-    val testTxt =
-        "Юуб лойдб бесётпгбоб гтён, луп йифшбёу сфттлйк аиьл. Оп тптупйу поб оё йи рсбгйм, фрсбзоёойк й фшёвоьц уёлтупг. Ема юупдп тпиебоь есфдйё ибнёшбуёмэоьё фшёвойлй. Ф юупк лойдй тпгтён йоба ибебшб. Поб рпнпзёу гбн обфшйуэта оё упмэлп сбидпгбсйгбуэ, оп й сбиньщмауэ рп-сфттлй. Лойдб, лпупсфя гь еёсзйуё г сфлбц, тптубгмёоб йи бхпсйинпг й сбиньщмёойк гёмйлйц ньтмйуёмёк, рйтбуёмёк, рпюупг, хймптпхпг й пвъётугёооьц еёауёмёк сбимйшоьц юрпц. Йц ньтмй - п уёц гпрсптбц, лпупсьё оё рёсётубяу гпмопгбуэ шёмпгёшётугп. Гь нпзёуё тпдмбщбуэта ймй оё тпдмбщбуэта т уён, шуп рспшйубёуё г юупк лойдё. Гпинпзоп, гбн рплбзёута, шуп лблйё-уп ньтмй фзё фтубсёмй. Оп гь епмзоь пваибуёмэоп рпефнбуэ й пвптопгбуэ, рпшёнф гь убл тшйубёуё. Б ёъё гь фиобёуё й рпшфгтугфёуё, лбл рсёлсбтоп игфшбу тмпгб мявгй, тптусбебойа, нфесптуй й епвспуь об сфттлпн аиьлё."
-    Decoder(lang, text).breakCipher()
-    return
+    // Вариант 1 - все буквы встречаются в тексте, замена включая пробел
+    val text1 = File("08.txt").readText(Charset.forName("Windows-1251")).lowercase()
 
+    val alphabet1 = extractAlphabet(text1) + ' '
+    println("alpabet1: $alphabet1")
+
+    Decoder(alphabet1, text1).breakCipher()
+    println()
+
+    // Вариант 2 - символы не из всего алфавита, английский текст
     val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
             "vcgg cjqcqr kj skhcja wgkja wjd rpycja rk ltr rbcjaq cj cr.\n" +
             "-- Roppy Lpwrsborr").lowercase()
 
-    val decoder = Decoder(lang, text2)
-    println(decoder.decodeWith(prepareText(text2, lang), "ghidkzlmbnopfqerstcuvwajyx".toList()))
+    val alphabet2 = ('a'..'z').toList()
+    println("alpabet2: $alphabet2")
 
-    decoder.fitValue("thetroublewithhavinganopenmindofcourseisthatpeoplewillinsistoncomingalongandtryingtoputthingsinitterrypratchett")
-        .also { println(it) }
-    decoder.fitValue("jumjfkcnxmpbjuuwsbyzwykvmyqbyrkhdkcfgmbgjuwjvmkvxmpbxxbygbgjkydkqbyzwxkyzwyrjflbyzjkvcjjubyzgbybjjmfflvfwjdumjj")
-        .also { println(it) }
-    decoder.fitValue("jlcjsivtmcegjllfrgbhfbipcbdgbniokivsacgajlfjpcipmcegmmgbagajibkidgbhfmibhfbnjsqgbhjipvjjlgbhagbgjjcssqpsfjklcjj")
-        .also { println(it) }
-    //decoder.test()
-    decoder.breakCipher()
+    Decoder(alphabet2, text2, "english").breakCipher()
+    println()
 }
