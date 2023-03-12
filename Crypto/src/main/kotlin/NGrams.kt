@@ -1,21 +1,50 @@
 import java.io.File
+import kotlin.math.log2
 
-fun prepareNGrams(n: Int, lang: String): Map<String, Double> {
-    val fileName = lang + "_" + when (n) {
-        1 -> "monograms"
-        2 -> "bigrams"
-        3 -> "trigrams"
-        4 -> "quadgrams"
-        else -> throw IllegalArgumentException("$n-grams not supported!")
-    } + ".txt"
-    val dataCount = File("LetterFrequencies/$fileName")
-        .readLines()
-        .associate { line ->
-            val (gram, freq) = line.split(" ").let { it[0] to it[1] }
-            require(gram.length == n)
-            gram.lowercase() to freq.toDouble()
+class NGrams(gramsAndCount: Map<String, Double>) {
+
+    val data = gramsAndCount.toList().sortedByDescending { it.second }.toMap()
+
+    val alphabet = data.keys.flatMapTo(mutableSetOf()) {
+        it.toCharArray().asIterable()
+    }.sorted()
+
+    fun normalized(): NGrams {
+        val sum = data.values.sum()
+        return NGrams(data.mapValues { it.value / sum })
+    }
+
+    fun entropy(): Double {
+        return -data.values.sumOf { it * log2(it) }
+    }
+
+    companion object {
+
+        fun load(n: Int, lang: String): NGrams {
+            val fileName = lang + "_" + when (n) {
+                1 -> "monograms"
+                2 -> "bigrams"
+                3 -> "trigrams"
+                4 -> "quadgrams"
+                else -> throw IllegalArgumentException("$n-grams not supported!")
+            } + ".txt"
+            val dataCount = File("LetterFrequencies/$fileName")
+                .readLines()
+                .associate { line ->
+                    val (gram, count) = line.split(" ").let { it[0] to it[1] }
+                    require(gram.length == n)
+                    gram.lowercase() to count.toDouble()
+                }
+            return NGrams(dataCount)
         }
-    return dataCount
+
+        fun fromText(text: CharSequence, n: Int): NGrams {
+            return NGrams(
+                text.windowed(n)
+                    .groupingBy { it }.eachCount()
+                    .mapValues { it.value.toDouble() })
+        }
+    }
 }
 
 /**
@@ -29,7 +58,7 @@ fun countNGram(alphabet: List<Char>, n: Int) =
  * затем преобразует их в 10-ичную систему, возвращая последовательность (для оптимизации).
  */
 fun encodedNGramsSeq(alphabet: List<Char>, text: CharSequence, n: Int) =
-    prepareText(text, alphabet).windowedSequence(n) { gram ->
+    text.alphabetOnly(alphabet).windowed(n) { gram ->
         encodeNGram(alphabet, gram)
     }
 
@@ -39,6 +68,11 @@ fun encodeNGram(alphabet: List<Char>, strGram: CharSequence): Int =
             .also { require(it >= 0) }
     }.toDecimalSystem(alphabet.size)
 
+fun encodeNGram(alphabet: List<Char>, strGram: List<Char>): Int =
+    strGram.map { char ->
+        alphabet.indexOf(char)
+    }.toDecimalSystem(alphabet.size)
+
 fun decodeNGram(alphabet: List<Char>, codeGram: Int, n: Int): String {
     return codeGram.fromDecimalSystem(alphabet.size)
         .map { alphabet[it] }
@@ -46,21 +80,10 @@ fun decodeNGram(alphabet: List<Char>, codeGram: Int, n: Int): String {
         .padStart(n, alphabet[0])
 }
 
-fun prepareText(text: CharSequence, alphabet: List<Char>) =
-    StringBuilder().apply {
-        text.map { it.lowercaseChar() }
-            .filter { it in alphabet }
-            .forEach { append(it) }
-    }
-
-fun searchNGrams(text: CharSequence, n: Int): Map<String, Double> {
-    return text.windowed(n).groupingBy { it }.eachCount().normalize()
-}
-
-private fun Map<String, Int>.normalize(): Map<String, Double> {
-    val sum = values.sumOf { it.toLong() }
-    return mapValues { it.value.toDouble() / sum }
-}
+fun CharSequence.alphabetOnly(alphabet: List<Char>) =
+    this.asSequence()
+        .map { it.lowercaseChar() }
+        .filter { it in alphabet }
 
 fun extractAlphabet(text: CharSequence): List<Char> {
     return text.toSet().filter { it.isLetter() }.sorted()

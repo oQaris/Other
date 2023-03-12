@@ -1,8 +1,4 @@
 import kotlin.math.ln
-import kotlin.math.pow
-import kotlin.math.sqrt
-
-typealias NGrams = Map<String, Double>
 
 enum class Language {
     RUS, ENG, DAN, FIN, FRA, DEU, ISL, POL, SPA, SWE
@@ -20,13 +16,11 @@ class EuclidWeightFitness(lang: String) : Fitness {
 
     private val weights = listOf(1.0 / 5, 13.0 / 60, 1.0 / 4, 1.0 / 3)
 
-    val alphabet = prepareNGrams(1, lang).keys.map { it.toCharArray()[0] }.sorted()
-
     private val probabilities = listOf(1, 2, 3, 4)
         .associateWith { n ->
-            val nGrams = prepareNGrams(n, lang)
-            DoubleArray(countNGram(alphabet, n)) {
-                nGrams[decodeNGram(alphabet, it, n)]!!
+            val nGrams = NGrams.load(n, lang)
+            DoubleArray(countNGram(nGrams.alphabet, n)) {
+                nGrams.data[decodeNGram(nGrams.alphabet, it, n)]!!
             }
         }
 
@@ -51,11 +45,11 @@ class EuclidWeightFitness(lang: String) : Fitness {
         return result
     }
 
-    private fun delta(ng1: NGrams, ng2: NGrams): Double {
+    /*private fun delta(ng1: NGrams, ng2: NGrams): Double {
         return ng1.entries.sumOf { (gram, p) ->
             ((ng2[gram] ?: 0.0) - p).pow(2)
         }.let { sqrt(it) }
-    }
+    }*/
 
     private fun normalize(input: Map<String, Double>): Map<String, Double> {
         val sum = input.values.sumOf { it }
@@ -66,17 +60,13 @@ class EuclidWeightFitness(lang: String) : Fitness {
 
 class NormLogFitness(private val n: Int, lang: String) : Fitness {
 
-    private val nGrams = prepareNGrams(n, lang)
+    private val nGrams = NGrams.load(n, lang)
 
-    val alphabet = nGrams.keys.flatMapTo(mutableSetOf()) {
-        it.toCharArray().asIterable()
-    }.sorted()
-
-    val fitnessData = DoubleArray(countNGram(alphabet, n))
+    val fitnessData = DoubleArray(countNGram(nGrams.alphabet, n))
 
     init {
-        nGrams.forEach { (gram, count) ->
-            fitnessData[encodeNGram(alphabet, gram)] = count
+        nGrams.data.forEach { (gram, count) ->
+            fitnessData[encodeNGram(nGrams.alphabet, gram)] = count
         }
 
         val sum = fitnessData.sum()
@@ -103,7 +93,7 @@ class NormLogFitness(private val n: Int, lang: String) : Fitness {
      * Ближе к 1 - лучше.
      */
     override fun fitValue(text: CharSequence) =
-        encodedNGramsSeq(alphabet, text, n).map { idx ->
+        encodedNGramsSeq(nGrams.alphabet, text, n).map { idx ->
             fitnessData[idx]
         }.toList().mean()
 }

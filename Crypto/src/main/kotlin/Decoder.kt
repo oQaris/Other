@@ -1,3 +1,4 @@
+import com.github.shiguruikai.combinatoricskt.combinations
 import java.io.File
 import java.nio.charset.Charset
 import kotlin.time.ExperimentalTime
@@ -8,24 +9,36 @@ class Decoder(
     private val origText: String,
     private val language: String = "russian"
 ) {
-    private val ciphertext = prepareText(origText, alphabet)
+    private val ciphertext = origText.alphabetOnly(alphabet).joinToString("")
     private val cash = createCash()
     private val fitness = NormLogFitness(4, language)
 
-    private fun printParams(){
+    private fun printStats() {
+        val stdNGrams = NGrams.load(1, language).normalized()
+        val preparedText = origText.alphabetOnly(stdNGrams.alphabet).joinToString("")
+        val textNGrams = NGrams.fromText(preparedText, 1).normalized()
 
+        println("language: $language")
+        println("alphabet: $alphabet")
+        println("text length:           ${origText.length}")
+        println("effective text length: ${ciphertext.length}")
+        println("language entropy: ${stdNGrams.entropy()}")
+        println("text entropy:     ${textNGrams.entropy()}")
     }
 
     @OptIn(ExperimentalTime::class)
-    fun breakCipher(maxRounds: Int = 1000, consolidate: Int = 3) {
+    fun breakCipher(maxRounds: Int = 1000, consolidate: Int = 2) {
         var localMax = Double.NEGATIVE_INFINITY
         var maxHit = 0
         var bestKey = alphabet.toList()
 
-        println("fitness           time        iter")
+        printStats()
+        println("rounds: $maxRounds,  consolidate: $consolidate")
+        println("fitness            time        iter")
         val populations = populationSequence().iterator()
         for (round in 0..maxRounds) {
             val key = populations.next()
+            println("$round. $key")
             val (timedValue, time) = measureTimedValue {
                 hillClimbing(key)
             }
@@ -39,15 +52,20 @@ class Decoder(
                     break
             }
         }
-        println(bestKey)
+        println("key: $bestKey")
         val newText = decodeWith(origText, bestKey)
-        println(newText)
+        println("decrypted:\n$newText")
     }
 
     data class BreakerInfo(val key: List<Char>, val fitness: Double, val iterated: Int)
 
-    //todo
-    private fun populationSequence() = sequence<List<Char>> {
+    private fun populationSequence() = sequence {
+        // Сначала добавляем согласно частотному анализу символов
+        val spaceAppender = if (alphabet.contains(' ')) listOf(' ') else listOf()
+        val origFreq = spaceAppender + NGrams.load(1, language).data.keys.map { it.single() }
+        val textFreq = NGrams.fromText(ciphertext, 1).data.keys.map { it.single() }
+        val bijection = textFreq.zip(origFreq).toMap()
+        yield(alphabet.map { bijection[it] ?: it })
         while (true) {
             yield(alphabet.shuffled())
         }
@@ -65,58 +83,57 @@ class Decoder(
     }
 
     private fun hillClimbing(startKey: List<Char>): BreakerInfo {
-        val keyLen = startKey.size
         val key = startKey.toMutableList()
         val plaintext = StringBuilder(decodeWith(ciphertext, key))
-        var maxFitness = Double.NEGATIVE_INFINITY
+        var maxFitness = fitness.fitValue(plaintext)
         var iteratedKeys = 0
         var wasUpdateKey = true
 
         while (wasUpdateKey) {
             wasUpdateKey = false
-            //todo + 00
-            for (idx1 in 0 until keyLen - 1) {
-                for (idx2 in idx1 + 1 until keyLen) {
-                    val ch1 = key[idx1]
-                    val ch2 = key[idx2]
+            key.indices.combinations(2).forEach { comb ->
+                val idx1 = comb[0]
+                val idx2 = comb[1]
+                val ch1 = key[idx1]
+                val ch2 = key[idx2]
 
+//                    key[idx1] = ch2
+//                    key[idx2] = ch1
+//                    val tmpText = decodeWith(ciphertext, key)
+//                    key[idx1] = ch1
+//                    key[idx2] = ch2
+
+                for (idx in cash[idx1]) {
+                    plaintext[idx] = ch2
+                }
+                for (idx in cash[idx2]) {
+                    plaintext[idx] = ch1
+                }
+
+                /*var tmpFitness = 0.0
+                encodedNGramsSeq(plaintext, 4).forEach { quadIdx ->
+                    tmpFitness += quadgram[quadIdx]
+                }*/
+                val tmpFitness = fitness.fitValue(plaintext)//tmpText
+                iteratedKeys++
+
+                if (tmpFitness > maxFitness) {
+                    maxFitness = tmpFitness
+                    wasUpdateKey = true
                     key[idx1] = ch2
                     key[idx2] = ch1
-                    val tmpText = decodeWith(ciphertext, key)
-                    key[idx1] = ch1
-                    key[idx2] = ch2
-
-//                    for (idx in cash[alphabet.indexOf(ch1)]) {
-//                        plaintext[idx] = ch2
-//                    }
-//                    for (idx in cash[alphabet.indexOf(ch2)]) {
-//                        plaintext[idx] = ch1
-//                    }
-
-                    /*var tmpFitness = 0.0
-                    encodedNGramsSeq(plaintext, 4).forEach { quadIdx ->
-                        tmpFitness += quadgram[quadIdx]
-                    }*/
-                    val tmpFitness = fitness.fitValue(tmpText)
-                    iteratedKeys++
-
-                    if (tmpFitness > maxFitness) {
-                        maxFitness = tmpFitness
-                        wasUpdateKey = true
-                        key[idx1] = ch2
-                        key[idx2] = ch1
+                    //}
+                } else /*if (tmpFitness < maxFitness) */ {
+                    for (idx in cash[idx1]) {
+                        plaintext[idx] = ch1
                     }
-//                    } else /*if (tmpFitness < maxFitness) */ {
-//                        for (idx in cash[alphabet.indexOf(ch1)]) {
-//                            plaintext[idx] = ch1
-//                        }
-//                        for (idx in cash[alphabet.indexOf(ch2)]) {
-//                            plaintext[idx] = ch2
-//                        }
-//                    }
+                    for (idx in cash[idx2]) {
+                        plaintext[idx] = ch2
+                    }
                 }
             }
         }
+        //}
         return BreakerInfo(key, maxFitness, iteratedKeys)
     }
 
@@ -135,11 +152,9 @@ fun main() {
     val text1 = File("08.txt").readText(Charset.forName("Windows-1251")).lowercase()
 
     val alphabet1 = extractAlphabet(text1) + ' '
-    println("alpabet1: $alphabet1")
 
     Decoder(alphabet1, text1).breakCipher()
     println()
-    return
 
     // Вариант 2 - символы не из всего алфавита, английский текст
     val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
@@ -147,7 +162,6 @@ fun main() {
             "-- Roppy Lpwrsborr").lowercase()
 
     val alphabet2 = ('a'..'z').toList()
-    println("alpabet2: $alphabet2")
 
     Decoder(alphabet2, text2, "english").breakCipher()
     println()
