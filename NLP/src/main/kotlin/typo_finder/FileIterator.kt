@@ -47,3 +47,8 @@ fun sequenceFiles(file: File, filter: (File) -> Boolean = { true }): Sequence<Fi
             yield(file)
     }
 }
+
+fun combSequenceFiles(roots: List<String>): Sequence<File> {
+    return roots.map { sequenceFiles(File(it), extsFilter) }
+        .reduce { acc, sequence -> acc + sequence }
+}

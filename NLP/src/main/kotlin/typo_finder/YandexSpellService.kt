@@ -1,5 +1,9 @@
 package typo_finder
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.encodeToStream
 import ru.amayakasa.linguistic.YandexSpeller
 import ru.amayakasa.linguistic.parameters.Language
 import ru.amayakasa.linguistic.parameters.ResponseInterface
@@ -7,19 +11,15 @@ import ru.amayakasa.linguistic.parameters.Version
 import ru.amayakasa.linguistic.response.Phrase
 import java.io.File
 
-class YandexSpellService(cacheFile: File = File("yandex_cache.csv")) {
+class YandexSpellService(cacheFile: File = File("yandex_cache.json")) {
     private val speller = YandexSpeller(Version.SPELLER_LATEST, ResponseInterface.SPELLER_JSON)
-    private val cacheTrue = cacheFile.readLines()
-        .map { it.split(';').first() }
+    private val cache = YandexSpellerCache(cacheFile)
 
     fun toCorrect(input: String): String {
 
         require(input.length < 10_000)
 
-        if (input in cacheTrue)
-            return input
-
-        return applyPatch(
+        return cache.data[input] ?: applyPatch(
             input,
             speller.getSpelledPhrase(input, Language.RUSSIAN)
         )
@@ -27,8 +27,9 @@ class YandexSpellService(cacheFile: File = File("yandex_cache.csv")) {
 
     fun toCorrect(input: List<String>): List<String> {
 
-        if (input.all { it in cacheTrue })
-            return input.toList()
+        //todo применять частично
+        if (input.all { it in cache.data.keys })
+            return input.map { cache.data[it]!! }
 
         return input.toList().chunked(100).flatMap {
             val local = it.toTypedArray()
@@ -51,6 +52,7 @@ class YandexSpellService(cacheFile: File = File("yandex_cache.csv")) {
             )
             shift += corrected.length - it.length
         }
+        cache.data[input] = process
         return process
     }
 
@@ -64,6 +66,23 @@ class YandexSpellService(cacheFile: File = File("yandex_cache.csv")) {
     fun countMisspelled(input: List<String>): Int {
         return toCorrect(input).zip(input)
             .count { it.first == it.second }
+    }
+
+    fun saveCache() {
+        cache.save()
+    }
+}
+
+
+@OptIn(ExperimentalSerializationApi::class)
+class YandexSpellerCache(private val file: File) {
+    val data: MutableMap<String, String> =
+        if (file.exists())
+            Json.decodeFromStream(file.inputStream())
+        else mutableMapOf()
+
+    fun save() {
+        Json.encodeToStream(data, file.outputStream())
     }
 }
 

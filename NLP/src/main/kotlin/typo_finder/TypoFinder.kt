@@ -1,14 +1,14 @@
 package typo_finder
 
 import inDictionary
-import rusWords
 import processors.sortedCounter
+import rusWords
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val root = File("Z:\\igas\\modules")
+    val roots = listOf("Z:\\igas\\submodules\\private_cash_holdem\\green2_private", "Z:\\igas\\modules\\CaseCollector\\src\\main\\java\\com\\gmware\\applications\\casecollector\\profilesaver")
 
     //allExts(root).processors.sortedCounter()
     //    .forEach { println(it.first + '\t' + it.second) }
@@ -26,9 +26,9 @@ fun main() {
     println("Запущен поиск комментариев...")
 
     File("list_file_typos.txt").printWriter().apply {
-        println("Search for typos in $root\nin files with extensions:\n" + exts.joinToString())
+        println("Search for typos in ${roots.joinToString()}\nin files with extensions:\n" + exts.joinToString())
 
-        sequenceFiles(root, extsFilter).forEach { file ->
+        combSequenceFiles(roots).forEach { file ->
             val typoWords = file.bufferedReader()
                 .lineSequence().flatMap { line ->
                     line.rusWords().filterNot {
@@ -63,9 +63,9 @@ fun main() {
     println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
 
     var confirmed = 0
-    val chatter2 = ProgressChatter(10)
+    val chatter2 = ProgressChatter(33)
     val speller = YandexSpellService()
-    File("typos.csv").printWriter().apply {
+    File("test.csv").printWriter().apply {
         //println("Total typos:;" + allTypos.size + ';')
         //println("Unique typos:;" + allTypos.toSet().size + ';')
         //println("Sorted list of typos:;;")
@@ -84,5 +84,7 @@ fun main() {
         }
         println()
     }.flush()
+    println("Сохранение кеша...")
+    speller.saveCache()
     println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $confirmed")
 }
