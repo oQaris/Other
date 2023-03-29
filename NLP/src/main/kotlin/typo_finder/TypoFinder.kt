@@ -17,13 +17,43 @@ fun main() {
     fun getDurationSec() = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - timeMark)
         .also { timeMark = System.currentTimeMillis() }
 
-    val allTypos = mutableListOf<String>()
+    println("Запущен поиск комментариев...")
+    val allTypos = buildTyposWithFreqQueue(roots, ExtraDictionary())
 
-    val extraDictionary = ExtraDictionary()
-    val chatter1 = ProgressChatter {
+    println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
+
+    var confirmed = 0
+    val chatter2 = ProgressChatter(33)
+    val speller = YandexSpellService()
+    File("test.csv").printWriter().apply {
+        //println("Total typos:;" + allTypos.size + ';')
+        //println("Unique typos:;" + allTypos.toSet().size + ';')
+        //println("Sorted list of typos:;;")
+        try {
+            allTypos.sortedCounter().forEach { (word, count) ->
+                val correct = speller.toCorrect(word)
+                if (correct != word) {
+                    println("$word;${correct};$count")
+                    confirmed++
+                }
+                chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
+            }
+        } catch (e: Exception) {
+            println(e)
+            flush()
+        }
+        println()
+    }.flush()
+    println("Сохранение кеша...")
+    speller.saveCache()
+    println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $confirmed")
+}
+
+fun buildTyposWithFreqQueue(roots: List<String>, extraDictionary: ExtraDictionary): List<String> {
+    val allTypos = mutableListOf<String>()
+    val chatter = ProgressChatter {
         println("Обработано $it файлов. Найдено ${allTypos.size} неизвестных слов.")
     }
-    println("Запущен поиск комментариев...")
 
     File("list_file_typos.txt").printWriter().apply {
         println("Search for typos in ${roots.joinToString()}\nin files with extensions:\n" + exts.joinToString())
@@ -55,36 +85,9 @@ fun main() {
                 typoWords.toSet().forEach { println(it) }
                 println()
             }
-            chatter1.incProgress()
+            chatter.incProgress()
         }
-        chatter1.chatProgress()
+        chatter.chatProgress()
     }.flush()
-
-    println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
-
-    var confirmed = 0
-    val chatter2 = ProgressChatter(33)
-    val speller = YandexSpellService()
-    File("test.csv").printWriter().apply {
-        //println("Total typos:;" + allTypos.size + ';')
-        //println("Unique typos:;" + allTypos.toSet().size + ';')
-        //println("Sorted list of typos:;;")
-        try {
-            allTypos.sortedCounter().forEach { (word, count) ->
-                val correct = speller.toCorrect(word)
-                if (correct != word) {
-                    println("$word;${correct};$count")
-                    confirmed++
-                }
-                chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
-            }
-        } catch (e: Exception) {
-            println(e)
-            flush()
-        }
-        println()
-    }.flush()
-    println("Сохранение кеша...")
-    speller.saveCache()
-    println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $confirmed")
+    return allTypos
 }
