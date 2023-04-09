@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
+    application
 }
 
 group = "me.oqaris"
@@ -17,7 +18,11 @@ dependencies{
 }
 
 tasks.shadowJar {
-    archiveFileName.set("pc.jar")
+    archiveFileName.set("bot_version_updater.jar")
     mergeServiceFiles()
     minimize()
+}
+
+application {
+    mainClass.set("bot_version_updater/BotVersionUpdaterKt")
 }
