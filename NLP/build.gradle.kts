@@ -25,9 +25,9 @@ dependencies {
     implementation(files("/libs/YandexLinguisticBundle-1.1.jar"))
     // Audio
     implementation("net.java.dev.jna:jna:5.12.1")
-    implementation("com.alphacephei:vosk:0.3.45")
+    implementation("com.alphacephei:vosk:0.3.38")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
 }
 
 tasks.getByName<Test>("test") {

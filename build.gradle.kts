@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     application
@@ -21,22 +21,22 @@ dependencies {
     implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
     implementation("net.java.dev.jna:jna:5.12.1")
-    implementation("com.alphacephei:vosk:0.3.45")
+    implementation("com.alphacephei:vosk:0.3.38")
     // Работа с сетью
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("org.jsoup:jsoup:1.15.4")
+    implementation("org.jsoup:jsoup:1.15.3")
     // Корутины
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // Сериализация
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
     // Дата
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
     // Логгер
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
     implementation("org.slf4j:slf4j-api:2.0.5")
-    implementation("ch.qos.logback:logback-classic:1.4.6")
+    implementation("ch.qos.logback:logback-classic:1.4.5")
 }
 
 application {
