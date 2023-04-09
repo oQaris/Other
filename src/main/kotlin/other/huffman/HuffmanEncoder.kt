@@ -1,21 +1,30 @@
 package other.huffman
 
 import java.util.*
+import kotlin.math.ceil
+import kotlin.math.log2
 
 fun main() {
-    val input = "beep boop beer!"
+    val input = "aaaaaaabbbccccddddd"
     val huffman = input.groupingBy { it.uppercaseChar() }.eachCount()
 
     val hafPriorityQueue = PriorityQueue(Comparator
         .comparing<Node?, Int?> { it.value }
-        .thenComparing { node -> node.data?.let { input.indexOf(it) } ?: 0 })
+        .thenComparing { node -> node.depth })
 
-    huffman.forEach { (ch, count) -> hafPriorityQueue.add(Node(data = ch, value = count)) }
+    huffman.forEach { (ch, count) -> hafPriorityQueue.add(Node(data = ch, value = count, depth = 1)) }
 
     while (hafPriorityQueue.size > 1) {
         val node1 = hafPriorityQueue.poll()
         val node2 = hafPriorityQueue.poll()
-        hafPriorityQueue.add(Node(left = node1, right = node2, value = node1.value + node2.value))
+        hafPriorityQueue.add(
+            Node(
+                left = node1,
+                right = node2,
+                depth = node1.depth + node2.depth,
+                value = node1.value + node2.value
+            )
+        )
     }
 
     val startNode = hafPriorityQueue.single()
@@ -27,19 +36,22 @@ fun main() {
     println(table.joinToString("\n"))
     println()
 
+    println("I = " + ceil(log2(table.size.toDouble())).toInt() * input.length)
     println("L = " + table.sumOf { it.codeLen * it.numApp })
     println()
     println("Закодированное слово:")
-    println(input.map { ch ->
+    val decoded = input.map { ch ->
         table.first { it.symbol == ch.uppercaseChar() }.codeword
-    }.joinToString(" "))
+    }
+    println(decoded.joinToString(" "))
 }
 
 data class Node(
     val left: Node? = null,
     val right: Node? = null,
     val data: Char? = null,
-    val value: Int
+    val value: Int,
+    val depth: Int
 )
 
 data class Row(val symbol: Char, val numApp: Int, val codeLen: Int, val codeword: String) {

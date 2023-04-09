@@ -27,7 +27,7 @@ class Decoder(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun breakCipher(maxRounds: Int = 1000, consolidate: Int = 2) {
+    fun breakCipher(maxRounds: Int = 100, consolidate: Int = 2) {
         var localMax = Double.NEGATIVE_INFINITY
         var maxHit = 0
         var bestKey = alphabet.toList()
@@ -142,6 +142,8 @@ class Decoder(
         return text.map { bijection[it] ?: it }
             .joinToString("")
     }
+
+    fun decode(key: List<Char>) = decodeWith(origText, key)
 }
 
 
@@ -149,12 +151,18 @@ fun main() {
     println("Heap max size: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB")
 
     // Вариант 1 - все буквы встречаются в тексте, замена включая пробел
-    val text1 = File("08.txt").readText(Charset.forName("Windows-1251")).lowercase()
+    val text1 = File("C:\\Users\\oQaris\\Downloads\\17.txt").readText(Charset.forName("Windows-1251")).lowercase()
 
-    val alphabet1 = extractAlphabet(text1) + ' '
+    val alphabet1 = (extractAlphabet(text1) + ' ' + 'ю').sorted()
+    //todo check
+    val decoder = Decoder(alphabet1, text1)
 
-    Decoder(alphabet1, text1).breakCipher()
+    val key = listOf('j')
+    println(decoder.decode(key))
+
+    decoder.breakCipher()
     println()
+    return
 
     // Вариант 2 - символы не из всего алфавита, английский текст
     val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
