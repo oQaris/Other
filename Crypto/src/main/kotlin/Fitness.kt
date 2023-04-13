@@ -95,5 +95,5 @@ class NormLogFitness(private val n: Int, lang: String) : Fitness {
     override fun fitValue(text: CharSequence) =
         encodedNGramsSeq(nGrams.alphabet, text, n).map { idx ->
             fitnessData[idx]
-        }.toList().mean()
+        }.toList().average()
 }
