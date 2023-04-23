@@ -1,10 +1,7 @@
 package regression
 
 import com.ezylang.evalex.Expression
-import kotlin.math.abs
-import kotlin.math.exp
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 import kotlin.random.Random
 
 object GenerateData {
@@ -20,7 +17,7 @@ object GenerateData {
         funStr: String,
         degree: Int,
         start: Double, end: Double, stepX: Double,
-        norm: Boolean,
+        noisePart: Double, maxErr: Double, isNormErr: Boolean,
     ) {
         require(start < end)
         funName = "y = $funStr"
@@ -32,9 +29,9 @@ object GenerateData {
         }
 
         xOriginal = (start..end step stepX).toList()
-        yLearn = xOriginal.map(function).noise(0.4, 0.5)
+        yLearn = xOriginal.map(function).noise(noisePart, maxErr, isNormErr)
 
-        val coefficients = leastSquaresMethod(xOriginal, yLearn, degree, norm)
+        val coefficients = leastSquaresMethod(xOriginal, yLearn, degree)
         polynomName = createPolynomName(coefficients)
 
         xValue = (start..end step (end - start) / 1000).toList()
@@ -42,12 +39,18 @@ object GenerateData {
     }
 }
 
-fun List<Double>.noise(changePercent: Double, maxErr: Double) = map {
+fun List<Double>.noise(changePercent: Double, maxErr: Double, norm: Boolean) = map {
     if (Random.nextDouble() < changePercent) {
-        val sign = if (Random.nextBoolean()) 1 else -1
-        it + Random.nextDouble(maxErr) * sign
+        if (norm) {
+            it + nextNorm() * maxErr
+        } else {
+            it + Random.nextDouble(-maxErr, maxErr)
+        }
     } else it
 }
+
+// Метод Бокса-Мюллера генерации нормального распределения
+fun nextNorm() = sqrt(-2 * ln(Random.nextDouble())) * cos(2 * PI * Random.nextDouble())
 
 infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
     require(start.isFinite())
@@ -61,44 +64,17 @@ infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
     return sequence.asIterable()
 }
 
-fun leastSquaresMethod(x: List<Double>, y: List<Double>, degree: Int, norm: Boolean): List<Double> {
-    val weight = generateWeight(y)
-    val coefficients = Array(degree + 1) { 0.0 }
-    for (i in 0..degree) {
-        for (j in x.indices) {
-            if (norm) {
-                coefficients[i] += weight[j] * x[j].pow(i) * y[j]
-            } else {
-                coefficients[i] += x[j].pow(i) * y[j]
-            }
-        }
-    }
+fun leastSquaresMethod(x: List<Double>, y: List<Double>, degree: Int): List<Double> {
     val xMatrix = Array(degree + 1) { DoubleArray(degree + 1) }
     for (i in 0..degree) {
         for (j in 0..degree) {
             xMatrix[i][j] = x.sumOf { xi -> xi.pow(i + j) }
         }
     }
-    val yMatrix = DoubleArray(degree + 1) { i -> x.sumOf { xi -> xi.pow(i) * y[x.indexOf(xi)] } }
-    val matrix = Matrix(xMatrix)
-    val solution = matrix.solve(yMatrix)
-    for (i in 0..degree) {
-        coefficients[i] = solution[i]
+    val yVector = DoubleArray(degree + 1) { i ->
+        x.sumOf { xi -> xi.pow(i) * y[x.indexOf(xi)] }
     }
-    return coefficients.toList()
-}
-
-fun generateWeight(y: List<Double>): List<Double> {
-    // Определяем функцию весовых коэффициентов
-    val n = y.size
-    val mu = y.average()
-    val sigma = y.sumOf { xi -> (xi - mu).pow(2) } / n
-    val weights = y.map { xi ->
-        val numerator = exp(-(xi - mu).pow(2) / (2 * sigma.pow(2)))
-        val denominator = sqrt(2 * Math.PI * sigma.pow(2))
-        numerator / denominator
-    }
-    return weights.toList()
+    return Matrix(xMatrix).solve(yVector).toList()
 }
 
 fun calculatePolynom(coef: List<Double>, x: Double): Double {

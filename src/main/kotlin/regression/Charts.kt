@@ -11,11 +11,15 @@ import javafx.stage.Stage
 fun main() {
     // https://ezylang.github.io/EvalEx/references/functions.html
     val function =
-    //"x*sinr(x)"
+        "x*sinr(x)"
     //"5x^3+x^2+5"
-        //"cosr(x)"
-        "log(x)"
-    GenerateData.create(function, 6, 0.1, 15.0, 0.03, false)
+    //"cosr(x)"
+    //"log(x)"
+    GenerateData.create(
+        function, degree = 7,
+        start = -5.0, end = 7.0, stepX = 0.5,
+        noisePart = 0.0, maxErr = 0.3, isNormErr = true
+    )
     Application.launch(Charts::class.java)
 }
 
