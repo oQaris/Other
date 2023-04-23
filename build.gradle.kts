@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("org.openjfx.javafxplugin") version "0.0.13"
     application
 }
 
@@ -11,12 +12,18 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
+    maven("https://packages.jetbrains.team/maven/p/skija/maven")
 }
 
 dependencies {
     testImplementation(kotlin("test"))
+    // Графический интерфейс
+    api("org.jetbrains.skija:skija-windows:0.93.6")
+    implementation("org.openjfx:javafx-controls:16")
+    implementation("org.openjfx:javafx-fxml:16")
     // Комбинаторика
     implementation("com.github.shiguruikai:combinatoricskt:1.6.0")
+    implementation("com.ezylang:EvalEx:3.0.4")
     // NLP
     implementation("com.github.demidko:aot:2022.05.16")
     implementation("com.vdurmont:emoji-java:5.1.1")
@@ -37,6 +44,11 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
     implementation("org.slf4j:slf4j-api:2.0.5")
     implementation("ch.qos.logback:logback-classic:1.4.5")
+}
+
+javafx {
+    version = "12"
+    modules("javafx.controls", "javafx.fxml")
 }
 
 application {
