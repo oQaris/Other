@@ -5,15 +5,18 @@ import kotlin.system.exitProcess
 
 /**
  * test
+ * <h2>368<h2>
+ * 23452345
  */
 class BotVersionUpdater {
     private val gitModifiedFilesPattern = "\\s*M\\s+(.+)".toRegex()
+    private val gitDiffLinesPattern = "[+-]\\s+(.+)".toRegex()
     private val botCommitNotesPattern = "\\s*\\*/".toRegex()
     private val botVersionPattern = "public static final int \\w*BOT\\w*_VERSION = (\\d+);".toRegex()
-    private val test = "public static final int BOT_VERSION = 367;"
+    private val test = "public static final int BOT_VERSION = 368;"
 
     fun update(message: String) {
-        val botClasses = preparedBotBaseClasses()
+        val botClasses = getNecessaryFiles()
         if (botClasses.isEmpty()) {
             println("No bot classes")
             return
@@ -27,18 +30,29 @@ class BotVersionUpdater {
         println("Commit note: $message")
     }
 
-    private fun preparedBotBaseClasses(): List<File> {
-        return getModifiedFiles().filter {
-            it.name.contains("Bot")
-        }.map { file ->
-            if (file.name.endsWith("Base.java")) file
-            else searchBaseClass(file.name)
+    private fun getNecessaryFiles(): List<File> {
+        return preparedBotBaseClasses().filter { file ->
+            val gitDiffProcess = ProcessBuilder("git", "diff", file.absolutePath).start()
+            val output = gitDiffProcess.inputStream.reader().readText()
+            println(output)
+            gitDiffLinesPattern.findAll(output).all { diffLine ->
+                botVersionPattern.find(diffLine.groups[1]!!.value) == null
+            }
         }
     }
 
+    private fun preparedBotBaseClasses(): List<File> {
+        return getModifiedFiles().filter {
+            it.name.contains("Bot")
+        }/*.map { file ->
+            if (file.name.endsWith("Base.java")) file
+            else searchBaseClass(file.name)
+        }*/
+    }
+
     private fun getModifiedFiles(): List<File> {
-        val gitProcess = ProcessBuilder("git", "status", "-s").start()
-        val output = gitProcess.inputStream.reader().readText()
+        val gitStatusProcess = ProcessBuilder("git", "status", "-s").start()
+        val output = gitStatusProcess.inputStream.reader().readText()
         println(output)
         return gitModifiedFilesPattern.findAll(output).map {
             File(it.groups[1]!!.value)
@@ -54,7 +68,7 @@ class BotVersionUpdater {
         try {
             val text = StringBuilder(baseClass.bufferedReader().readText())
 
-            val versionMatch = botVersionPattern.find(text)?.groups?.get(1)!!
+            val versionMatch = botVersionPattern.find(text)!!.groups[1]!!
             val newVersion = (versionMatch.value.toInt() + 1).toString()
             text.replace(versionMatch.range.first, versionMatch.range.last + 1, newVersion)
 
