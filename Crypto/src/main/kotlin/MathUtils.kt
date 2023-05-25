@@ -26,6 +26,7 @@ fun main() {
         "Подсоединение по адресу 65.21.41.12:27953 отклонено",
         "Not setted Strategy Params",
         "Указан неподдерживаемый генератор NLMewTestBot1",
+        "Указан неподдерживаемый генератор NLMewTestBot4",
         "Failed to build group profile last time, don't repeat again FAuto.[HUSNGBot4].10.SPIN.STT_V3",
         "ParseLimitFile",
         "Error loading strategy parameters",
@@ -47,10 +48,10 @@ fun main() {
         "GameException: Unknown currency code"*/
     )
     val frequency = IntArray(known.size)
-    File("C:\\Users\\Oqaris\\Downloads\\total-json-07-09")
+    File("C:\\Users\\Oqaris\\Downloads\\flog")
         .listFiles()?.forEach { file ->
             file.bufferedReader().lineSequence()
-                .filter { it.contains("\"level\":\"ERROR\",") /*&& it.contains("PLO 6max PLOBot8") && it.contains("Can't find games in BD")*/ }
+                .filter { it.contains("\"level\":\"ERROR\"") /*&& it.contains("PLO 6max PLOBot8") && it.contains("Can't find games in BD")*/ }
                 //.filter { line -> known.any { line.contains(it) } }
                 .forEach { line ->
                     var counter = 0

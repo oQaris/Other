@@ -44,25 +44,36 @@ class BotVersionUpdater {
     private fun preparedBotBaseClasses(): List<File> {
         return getModifiedFiles().filter {
             it.name.contains("Bot")
-        }/*.map { file ->
-            if (file.name.endsWith("Base.java")) file
-            else searchBaseClass(file.name)
-        }*/
+        }.map { file ->
+            searchBaseClassIfNeed(file)
+        }
     }
 
     private fun getModifiedFiles(): List<File> {
-        val gitStatusProcess = ProcessBuilder("git", "status", "-s").start()
-        val output = gitStatusProcess.inputStream.reader().readText()
-        println(output)
-        return gitModifiedFilesPattern.findAll(output).map {
-            File(it.groups[1]!!.value)
-        }.toList()
+        val allRepos = listOf(File(".")) + (File("submodules").listFiles()?.toList() ?: listOf<File>())
+        return buildList {
+            allRepos.forEach { dir ->
+                val gitStatusProcess = ProcessBuilder("git", "status", "-s")
+                    .directory(dir)
+                    .start()
+                val output = gitStatusProcess.inputStream.reader().readText()
+                println(output)
+                addAll(gitModifiedFilesPattern.findAll(output).map {
+                    File(it.groups[1]!!.value)
+                }.toList())
+            }
+        }
     }
 
-    private fun searchBaseClass(botClassName: String) =
-        combSequenceFiles("modules", "submodules") {
-            it.name == botClassName.dropLast(5) + "Base.java"
-        }.first()
+    private fun searchBaseClassIfNeed(botClass: File): File {
+        val baseSuffix = "Base.java"
+        return if (botClass.name.endsWith(baseSuffix)) botClass
+        else {
+            combSequenceFiles("modules") {
+                it.name == botClass.name.dropLast(5) + baseSuffix
+            }.firstOrNull() ?: botClass
+        }
+    }
 
     private fun incrementBotVersion(baseClass: File, message: String): String {
         try {
@@ -91,7 +102,13 @@ class BotVersionUpdater {
 
 fun main(args: Array<String>) {
     try {
-        val message = File(".git\\COMMIT_EDITMSG").readText().trim()
+        val origMsg =
+            if (args.isEmpty()) File(".git\\COMMIT_EDITMSG").readText().trim()
+            else args.single()
+        val message = origMsg.split("\n")
+            .first().split("-").let {
+                it[0].trim().take(3) + " " + it[1].trim()
+            }
         BotVersionUpdater().update(message)
         Thread.sleep(1000)
     } catch (e: Exception) {
