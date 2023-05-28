@@ -8,7 +8,8 @@ class PropertiesCollector(
     private val origProps: Path,
     private val exeFile: Path,
     private val isBackup: Boolean = false,
-    private val isFullLog: Boolean = true
+    private val isFullLog: Boolean = true,
+    private val isBoldMode: Boolean = true,
 ) {
     private val pattern = "properties([/\\\\][\\w-\\\\.]+)+".toRegex()
     private val origWorkDir = exeFile.toAbsolutePath().parent.normalize()
