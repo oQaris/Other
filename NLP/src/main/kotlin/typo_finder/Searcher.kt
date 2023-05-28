@@ -7,6 +7,7 @@ import processors.sortedCounter
 import findBy
 import java.io.File
 
+// Просто поиск интересных штук в проекте
 fun main() {
     searchBy(::enRusWords)
 }

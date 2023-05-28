@@ -1,6 +1,8 @@
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     application
+    java
 }
 
 group = "me.oqaris"

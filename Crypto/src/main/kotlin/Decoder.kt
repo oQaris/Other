@@ -151,10 +151,11 @@ fun main() {
     println("Heap max size: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB")
 
     // Вариант 1 - все буквы встречаются в тексте, замена включая пробел
-    val text1 = File("C:\\Users\\oQaris\\Downloads\\17.txt").readText(Charset.forName("Windows-1251")).lowercase()
+    val text1 = File("C:\\Users\\oQaris\\Downloads\\07.txt")
+        .readText(Charset.forName("Windows-1251"))
+        .lowercase()
 
-    val alphabet1 = (extractAlphabet(text1) + ' ' + 'ю').sorted()
-    //todo check
+    val alphabet1 = ('а'..'я') + ' '
     val decoder = Decoder(alphabet1, text1)
 
     val key = listOf('j')
