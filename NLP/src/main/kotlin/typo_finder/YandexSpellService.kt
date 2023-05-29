@@ -82,7 +82,7 @@ class YandexSpellerCache(
     @Transient private val file: File = File("data/yandex_cache.json")
 ) : MutableMap<String, String> by loadFromJsonFile(file) {
 
-    companion object {
+    private companion object {
         fun loadFromJsonFile(file: File): MutableMap<String, String> {
             return if (file.exists())
                 Json.decodeFromStream(file.inputStream())
@@ -91,7 +91,7 @@ class YandexSpellerCache(
     }
 
     fun save() {
-        Json.encodeToStream(this, file.outputStream())
+        Json.encodeToStream(this as Map<String, String>, file.outputStream())
     }
 }
 
