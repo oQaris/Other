@@ -18,7 +18,7 @@ class NGrams(gramsAndCount: Map<String, Double>) {
         return -data.values.sumOf { it * log2(it) }
     }
 
-    companion object {
+    companion object Factory {
 
         fun load(n: Int, lang: String): NGrams {
             val fileName = lang + "_" + when (n) {
@@ -62,11 +62,8 @@ fun encodedNGramsSeq(alphabet: List<Char>, text: CharSequence, n: Int) =
         encodeNGram(alphabet, gram)
     }
 
-fun encodeNGram(alphabet: List<Char>, strGram: CharSequence): Int =
-    strGram.map { char ->
-        alphabet.indexOf(char)
-            .also { require(it >= 0) }
-    }.toDecimalSystem(alphabet.size)
+fun encodeNGram(alphabet: List<Char>, strGram: CharSequence) =
+    encodeNGram(alphabet, strGram.toList())
 
 fun encodeNGram(alphabet: List<Char>, strGram: List<Char>): Int =
     strGram.map { char ->

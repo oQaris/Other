@@ -97,24 +97,13 @@ class Decoder(
                 val ch1 = key[idx1]
                 val ch2 = key[idx2]
 
-//                    key[idx1] = ch2
-//                    key[idx2] = ch1
-//                    val tmpText = decodeWith(ciphertext, key)
-//                    key[idx1] = ch1
-//                    key[idx2] = ch2
-
                 for (idx in cash[idx1]) {
                     plaintext[idx] = ch2
                 }
                 for (idx in cash[idx2]) {
                     plaintext[idx] = ch1
                 }
-
-                /*var tmpFitness = 0.0
-                encodedNGramsSeq(plaintext, 4).forEach { quadIdx ->
-                    tmpFitness += quadgram[quadIdx]
-                }*/
-                val tmpFitness = fitness.fitValue(plaintext)//tmpText
+                val tmpFitness = fitness.fitValue(plaintext)
                 iteratedKeys++
 
                 if (tmpFitness > maxFitness) {
@@ -122,8 +111,7 @@ class Decoder(
                     wasUpdateKey = true
                     key[idx1] = ch2
                     key[idx2] = ch1
-                    //}
-                } else /*if (tmpFitness < maxFitness) */ {
+                } else {
                     for (idx in cash[idx1]) {
                         plaintext[idx] = ch1
                     }
@@ -133,7 +121,6 @@ class Decoder(
                 }
             }
         }
-        //}
         return BreakerInfo(key, maxFitness, iteratedKeys)
     }
 
@@ -150,28 +137,24 @@ class Decoder(
 fun main() {
     println("Heap max size: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB")
 
-    // Вариант 1 - все буквы встречаются в тексте, замена включая пробел
-    val text1 = File("C:\\Users\\oQaris\\Downloads\\07.txt")
-        .readText(Charset.forName("Windows-1251"))
-        .lowercase()
+    run {
+        // Вариант 1 - все буквы встречаются в тексте, замена включая пробел
+        val text = File("C:\\Users\\oQaris\\Downloads\\07.txt")
+            .readText(Charset.forName("Windows-1251"))
+            .lowercase()
 
-    val alphabet1 = ('а'..'я') + ' '
-    val decoder = Decoder(alphabet1, text1)
+        val alphabet = ('а'..'я') + ' '
+        Decoder(alphabet, text).breakCipher()
+    }
 
-    val key = listOf('j')
-    println(decoder.decode(key))
+    if (true) return
+    run {
+        // Вариант 2 - символы не из всего алфавита, английский текст
+        val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
+                "vcgg cjqcqr kj skhcja wgkja wjd rpycja rk ltr rbcjaq cj cr.\n" +
+                "-- Roppy Lpwrsborr").lowercase()
 
-    decoder.breakCipher()
-    println()
-    return
-
-    // Вариант 2 - символы не из всего алфавита, английский текст
-    val text2 = ("Rbo rpktigo vcrb bwucja wj kloj hcjd, km sktpqo, cq rbwr loklgo \n" +
-            "vcgg cjqcqr kj skhcja wgkja wjd rpycja rk ltr rbcjaq cj cr.\n" +
-            "-- Roppy Lpwrsborr").lowercase()
-
-    val alphabet2 = ('a'..'z').toList()
-
-    Decoder(alphabet2, text2, "english").breakCipher()
-    println()
+        val alphabet2 = ('a'..'z').toList()
+        Decoder(alphabet2, text2, "english").breakCipher()
+    }
 }
