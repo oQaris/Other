@@ -1,15 +1,15 @@
 package typo_finder
 
 import en
+import findBy
+import processors.sortedCounter
 import ru
 import rusWords
-import processors.sortedCounter
-import findBy
 import java.io.File
 
 // Просто поиск интересных штук в проекте
 fun main() {
-    searchBy(::enRusWords)
+    searchBy(::botVersion)
 }
 
 fun customRegex(file: File): List<String> {
@@ -17,6 +17,20 @@ fun customRegex(file: File): List<String> {
         .findAll(file.readText())
         .flatMap { it.value.rusWords() }
         .toList()
+}
+
+fun latinC(file: File): List<String> {
+    return file.readText()
+        .findBy("($ru+ c )|( c $ru+)|($ru+c$ru*)|($ru*c$ru+)".toRegex())
+        .toList()
+}
+
+fun botVersion(file: File): List<String> {
+    val patternDescription = "Версия робота, единая для оппонента и экспертных наследников".toRegex()
+    val patternVersion = "public static final int \\w+_BOT_VERSION = \\d+;".toRegex()
+    val text = file.readText()
+    val wasDetect = text.contains(patternDescription) xor text.contains(patternVersion)
+    return if (wasDetect) listOf(file.name) else listOf()
 }
 
 fun enRusWords(file: File): List<String> {

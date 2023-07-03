@@ -8,10 +8,7 @@ import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val roots = listOf("Z:\\igas\\submodules\\private_cash_holdem\\green2_private", "Z:\\igas\\modules\\CaseCollector\\src\\main\\java\\com\\gmware\\applications\\casecollector\\profilesaver")
-
-    //allExts(root).processors.sortedCounter()
-    //    .forEach { println(it.first + '\t' + it.second) }
+    val roots = listOf("Z:\\igas")
 
     var timeMark = System.currentTimeMillis()
     fun getDurationSec() = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - timeMark)
@@ -23,12 +20,12 @@ fun main() {
     println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
 
     var confirmed = 0
-    val chatter2 = ProgressChatter(33)
+    val chatter2 = ProgressChatter(31)
     val speller = YandexSpellService()
     File("test.csv").printWriter().apply {
-        //println("Total typos:;" + allTypos.size + ';')
-        //println("Unique typos:;" + allTypos.toSet().size + ';')
-        //println("Sorted list of typos:;;")
+        println("Total typos:;" + allTypos.size + ';')
+        println("Unique typos:;" + allTypos.toSet().size + ';')
+        println("Sorted list of typos:;;")
         try {
             allTypos.sortedCounter().forEach { (word, count) ->
                 val correct = speller.toCorrect(word)
@@ -51,12 +48,12 @@ fun main() {
 
 fun buildTyposWithFreqQueue(roots: List<String>, extraDictionary: ExtraDictionary): List<String> {
     val allTypos = mutableListOf<String>()
-    val chatter = ProgressChatter {
+    val chatter = ProgressChatter(500) {
         println("Обработано $it файлов. Найдено ${allTypos.size} неизвестных слов.")
     }
 
+    println("Search for typos in ${roots.joinToString()}\nin files with extensions:\n" + exts.joinToString())
     File("list_file_typos.txt").printWriter().apply {
-        println("Search for typos in ${roots.joinToString()}\nin files with extensions:\n" + exts.joinToString())
 
         combSequenceFiles(roots).forEach { file ->
             val typoWords = file.bufferedReader()
