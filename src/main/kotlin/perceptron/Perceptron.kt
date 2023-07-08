@@ -45,6 +45,16 @@ class Perceptron(private val inputSize: Int, private val hiddenSize: Int, privat
         return sumErr / outputSize
     }
 
+    fun calcErr(inputs: DoubleArray, targets: DoubleArray): Double {
+        val (_, outputLayerOutputs) = forwardPass(inputs)
+        var sumErr = 0.0
+        for (i in 0 until outputSize) {
+            val error = targets[i] - outputLayerOutputs[i]
+            sumErr += abs(error)
+        }
+        return sumErr / outputSize
+    }
+
     fun predict(inputs: DoubleArray): DoubleArray {
         return forwardPass(inputs).second
     }

@@ -122,16 +122,14 @@ class KNN(private val k: Int, private val dataset: Set<Item>) {
 }
 
 fun main() {
-    searchOutliers()
-    return
-    val iter = 1_000_00
+    val iter = 1_000
     val knn = KNN(1, globalData)
     val metrics = listOf<Metric>(::manhattan, ::euclidean, ::chebyshev, ::distance, ::cosine)
         .associateWith { mutableMapOf<Clazz, MutableList<Clazz>>() }
 
     globalData.forEach { orig ->
-        repeat(1_000_00) {
-            val input = orig.data.noise(0.4f)
+        repeat(iter) {
+            val input = orig.data.partNoise(3 / 8f)
             metrics.forEach { (metric, table) ->
                 table.putIfAbsent(orig.clazz, mutableListOf())
                 table[orig.clazz]!!.add(knn.search(input, metric))

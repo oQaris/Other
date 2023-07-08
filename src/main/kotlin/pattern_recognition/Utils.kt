@@ -10,3 +10,9 @@ fun Data.noise(p: Float) = map {
         (it + 1) % 2
     else it
 }
+
+fun Data.partNoise(p: Float) = mapIndexed { idx, it ->
+    if (idx < size * p)
+        (it + 1) % 2
+    else it
+}

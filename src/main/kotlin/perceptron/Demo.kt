@@ -1,6 +1,7 @@
 package perceptron
 
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.random.Random
 
 fun main() {
@@ -46,18 +47,29 @@ fun regressionDemo() {
 
 fun classificationDemo() {
     val (x, y) = loadIrisDataset()
-    val (train, test) = trainTestSplit(x, y, 0.20)
+    val (train, test) = trainTestSplit(x, y, 0.23)
 
-    val mlp = Perceptron(inputSize = 4, hiddenSize = 15, outputSize = 3)
+    val mlp = Perceptron(inputSize = 4, hiddenSize = 3, outputSize = 3)
 
-    for (epoch in 0 until 50) {
+    println(";train;test")
+    for (epoch in 0 until Int.MAX_VALUE) {
         var error = 0.0
         train.forEach { (inputs, targets) ->
-            error += mlp.train(inputs, targets, 0.05)
+            error += mlp.train(inputs, targets, 0.5)
         }
-        //accuracy(train, mlp)
-        //accuracy(test, mlp)
-        println("epoch $epoch: error = ${error / train.size}")
+        val ephDiv = 50_000
+        if (/*epoch < 100 || (epoch < 10_000 && epoch % 1000 == 0) || */epoch % ephDiv == 0) {
+            var errorTest = 0.0
+            test.forEach { (inputs, targets) ->
+                errorTest += mlp.calcErr(inputs, targets)
+            }
+            println("${epoch / ephDiv};${error / train.size};${errorTest / test.size}")
+        }
+        /*print("train")
+        accuracy(train, mlp)
+        print("test")
+        accuracy(test, mlp)
+        println("epoch $epoch: error = ${error / train.size}")*/
     }
     accuracy(test, mlp)
 }
@@ -75,7 +87,7 @@ fun accuracy(dataset: List<Pair<DoubleArray, DoubleArray>>, mlp: Perceptron) {
 
 fun trainTestSplit(x: List<DoubleArray>, y: List<DoubleArray>, testRatio: Double):
         Pair<List<Pair<DoubleArray, DoubleArray>>, List<Pair<DoubleArray, DoubleArray>>> {
-    val dataset = x.zip(y).shuffled()
+    val dataset = x.zip(y).shuffled(Random(45))
     val trainSize = ((1 - testRatio) * dataset.size).toInt()
     val trainData = dataset.subList(0, trainSize)
     val testData = dataset.subList(trainSize, dataset.size)
