@@ -1,71 +1,103 @@
 package wikijumper
 
-import kotlinx.coroutines.*
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import org.jsoup.Jsoup
-import java.io.IOException
-import java.net.URI
-import java.net.URLDecoder
-import java.net.URLEncoder
 import java.util.*
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-@OptIn(ExperimentalSerializationApi::class)
-fun main() = runBlocking {
-    val start = decode("Barack_Obama")
-    val finish = decode("Thanos")
+suspend fun main() {
+    WikiJumper(
+        "ru",
+        decode("Изобретатель"),
+        decode("Ажурное_вязание")
+    ).start()
 
-    /*val start = decode("Земля")
-    val finish = decode("Боулинг")*/
-    // Sunbittern
-
-    /*println("$start -> $finish")
-
-    val jumper = WikiJumper("en", start, finish)
-    jumper.start()*/
-
-    //val link = decode("Sunbittern")
-    //println(Jsoup.connect("").get().html())
-
-    //println(Jsoup.connect("https://en.wikipedia.org/wiki/").get().location())
+//    WikiCrawlerThreadPool(
+//        "ru",
+//        //decode("Путин"),
+//        //decode("Танос")
+//        decode("Изобретатель"),
+//        decode("Ажурное_вязание")
+//    ).findShortestPath()
+//        .forEach { println(it) }
 }
 
-fun decode(link: String): String {
-    return URLDecoder.decode(link, "UTF-8")
-    // withContext(Dispatchers.IO)
-}
+class WebPage(val url: String, val depth: Int, val parent: WebPage?)
 
-fun encode(link: String): String {
-    return URLEncoder.encode(link, "UTF-8")
+class WikiCrawlerThreadPool(
+    private val locale: String,
+    private val startUrl: String,
+    private val endUrl: String
+) {
+    private val logger = KotlinLogging.logger {}
+    private val visited = ConcurrentHashMap.newKeySet<String>()
+    private val queue = PriorityBlockingQueue(11, Comparator.comparingInt<WebPage> { it.depth })
+
+    fun findShortestPath(): List<String> {
+        // Начальная страница добавляется в очередь
+        queue.add(WebPage(startUrl, 0, null))
+
+        val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+        val foundPath = AtomicReference<WebPage>()
+
+        while (foundPath.get() == null && queue.isNotEmpty()) {
+            val currentPage = queue.take()
+            visited.add(currentPage.url)
+            logger.debug { "[visited_size] ${visited.size}" }
+            logger.debug { "[queue_size] ${queue.size}" }
+            logger.debug { "[depth] ${currentPage.depth}" }
+
+            val future = executor.submit {
+                // Извлекаем все ссылки на текущей странице и добавляем их в очередь
+                val links = getChild(locale, currentPage.url)
+                for (link in links) {
+                    // Проверяем, не является ли текущая страница конечной страницей
+                    if (currentPage.url == endUrl) {
+                        foundPath.set(currentPage)
+                        break
+                    }
+                    // Проверяем, не посещали ли мы эту страницу ранее
+                    if (!visited.contains(link)) {
+                        queue.add(WebPage(link, currentPage.depth + 1, currentPage))
+                    }
+                }
+            }
+            if (queue.isEmpty())
+                future.get() // выполняем сразу же, дабы пополнить очередь
+        }
+        executor.correctClose()
+        return foundPath.get()?.let { buildPath(it) } ?: emptyList()
+    }
+
+    private fun ExecutorService.correctClose() {
+        shutdown()
+        try {
+            if (!awaitTermination(10, TimeUnit.SECONDS))
+                shutdownNow()
+        } catch (e: InterruptedException) {
+            shutdownNow()
+        }
+    }
 }
 
 class WikiJumper(
-    private val locale: String = "en",
+    private val locale: String,
     private val start: String,
     private val finish: String,
     private val startTime: Long = System.nanoTime(),
 ) {
-    private val mainPage = Jsoup.connect("https://$locale.wikipedia.org/wiki/").get().location().drop(24)
-    private val logger = KotlinLogging.logger {}
-
     private val dirNodes: MutableSet<Node> = Collections.synchronizedSet(LinkedHashSet())
-    private val backNodes: MutableSet<Node> = mutableSetOf()
-    private val finalLinks: MutableSet<String> = mutableSetOf(finish)
-
     private val maxDepth = AtomicInteger(Int.MAX_VALUE)
 
-    // private val mutex = Mutex()
-    // private val mutex2 = Mutex()
-    // private val mutex3 = Mutex()
-
     private val job = Job()
-
     private var shutdownAction = {
         job.cancel()
-        //saveState(dirNodes)
     }
 
     init {
@@ -79,27 +111,12 @@ class WikiJumper(
         // Если начинаем с начала
         if (dirNodes.isEmpty())
             dirNodes.add(Node(start, null))
-        //if (backNodes.isEmpty())
-        //    backNodes.add(Node(finish, null))
-
-        /*repeat(30) {
-            CoroutineScope(job).launch {
-                try {
-                    reverseSearch()
-                } catch (e: NoSuchElementException) {
-                    //todo сделать ожидание
-                    println("Страницы не связаны!")
-                }
-            }
-            delay(500)
-        }*/
-        repeat(50) {
-            CoroutineScope(job).launch {
-                try {
-                    var endNode = task()
+        while (dirNodes.isNotEmpty()) {
+            val future = CoroutineScope(job).launch {
+                var endNode = task()
+                if (endNode != null) {
                     job.cancel()
-
-                    if (endNode.link != finish) // Если нашли родителя через reverseSearch()
+                    if (endNode.link != finish)
                         endNode = Node(finish, endNode)
 
                     println("\nПуть:")
@@ -108,118 +125,35 @@ class WikiJumper(
                     shutdownAction = {}
                     println(System.nanoTime() - startTime)
                     exitProcess(0)
-
-                } catch (e: NoSuchElementException) {
-                    //todo сделать ожидание
-                    println("Страницы не связаны!")
                 }
             }
-            //todo костыль для искусственного ожидания
-            delay(500)
+            if (dirNodes.isEmpty())
+                future.join()
         }
         job.join()
     }
 
-    private fun task(): Node {
-        while (true) {
-            //todo сделать ожидание
-            //val curNode = mutex.withLock {
-            val curNode =
-                synchronized(dirNodes) {
-                    dirNodes.first { !it.isVisited }
-                        .apply { isVisited = true }
-                    //}
-                }
-
-            val links = getChild(curNode.link) ?: continue
-
-            //mutex3.withLock {
-            //val final = links.find { it in finalLinks }
-            if (finish in links && curNode.depth() <= maxDepth.get()) {
-                println(Node(finish, curNode))
-                println()
-                maxDepth.set(curNode.depth())
-            } else if (finish in links) return Node("777", null)
-            //}
-
+    private fun task(): Node? {
+        val curNode =
             synchronized(dirNodes) {
-                //mutex.withLock {
-                dirNodes.addAll(links
-                    .map { Node(it, curNode) })
-                //}
-            }
-        }
-    }
-
-    /*private suspend fun reverseSearch() {
-        while (true) {
-            //todo сделать ожидание
-            val curLink = mutex2.withLock {
-                backNodes.first { !it.isVisited }
+                dirNodes.first { !it.isVisited }
                     .apply { isVisited = true }
-                    .run { link }
             }
 
-            val links = getChild(curLink) ?: continue
-            if (links.contains(finish)) {
-                mutex3.withLock { finalLinks.add(curLink) }
-                logger.debug { "Найдена прямая ссылка на финальную страницу - $curLink" }
-            }
+        val links = getChild(locale, curNode.link)
 
-            mutex2.withLock {
-                backNodes.addAll(links
-                    .map { Node(it, null) })
-            }
+        if (finish in links && curNode.depth() <= maxDepth.get()) {
+            maxDepth.set(curNode.depth())
+            return Node(finish, curNode)
         }
-    }*/
 
-    private fun getChild(shortLink: String): List<String>? = try {
-        val timeout = 30            // Увеличить значение при плохом интернете
-        val prefixWiki = "/wiki/"   // Внутренняя ссылка википедии
-
-        val escapedLink = // Экранируем специальные символы в ссылке
-            URI.create("https://$locale.wikipedia.org/wiki/${encode(shortLink)}").toString()
-
-        val doc = Jsoup.connect(escapedLink).timeout(timeout * 1000).get()
-        logger.trace { "Зашли на $shortLink" }
-
-        doc.select("a").eachAttr("href")
-            .asSequence().distinct()
-            .minusElement(mainPage) // Удаляем главную страницу, чтоб не было читерно
-            .filter { it.startsWith(prefixWiki) } // Отсеиваем ссылки не на википедию
-            .filterNot { it.contains(':') } // Исключаем файлы и специальные страницы
-            .map { it.substring(prefixWiki.length) } // убираем /wiki/, чтоб не занимало память
-            .map { link -> link.takeWhile { it != '#' } } // Удаляем якоря
-            .map { decode(it) }.toList()
-
-    } catch (e: IOException) {
-        //logger.warn { "Пропущена страница: $shortLink" }
-        null
+        synchronized(dirNodes) {
+            dirNodes.addAll(links
+                .map { Node(it, curNode) })
+        }
+        return null
     }
 
-
-    /*@OptIn(ExperimentalSerializationApi::class)
-    fun loadState(): MutableSet<Node> {
-        println("Загрузка состояния...")
-        val file = File("proto/state_$start-$finish.proto")
-        return (if (file.exists()) {
-            val bytes = file.readBytes()
-            ProtoBuf.decodeFromByteArray(bytes)
-        } else mutableSetOf<Node>()
-                ).apply { println("Загружено $size ссылок") }
-    }*/
-
-    /*@OptIn(ExperimentalSerializationApi::class)
-    fun saveState(state: MutableSet<Node>) {
-        println("Завершаем сопрограммы...")
-        runBlocking { job.cancelAndJoin() }
-        println("Сохранение состояния...")
-        val bytes = ProtoBuf.encodeToByteArray(state)
-        File("proto/state_$start-$finish.proto").writeBytes(bytes)
-        println("Сохранено ${state.size} ссылок")
-    }*/
-
-    @Serializable
     data class Node(val link: String, val parent: Node?, var isVisited: Boolean = false) {
         // Надо, чтобы при сравнении узлов учитывалась только ссылка
         override fun equals(other: Any?): Boolean {
