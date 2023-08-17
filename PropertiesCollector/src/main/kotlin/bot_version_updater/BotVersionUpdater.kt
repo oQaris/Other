@@ -79,8 +79,10 @@ class BotVersionUpdater {
 
     private fun getFilesWithUnmodifiedVersions(): List<File> {
         return preparedBotBaseClasses().filter { file ->
-            val gitDiffProcess = ProcessBuilder("git", "show", "HEAD", "--", file.absolutePath).start()
-            val output = gitDiffProcess.inputStream.reader().readText()
+            val gitDiffProcess = ProcessBuilder("git", "diff", file.absolutePath).start()
+            val gitShowProcess = ProcessBuilder("git", "show", "HEAD", "--", file.absolutePath).start()
+            val output = gitDiffProcess.inputStream.reader().readText() +
+                    "\n" + gitShowProcess.inputStream.reader().readText()
             gitDiffLinesPattern.findAll(output).all { diffLine ->
                 botVersionPattern.find(diffLine.groups[1]!!.value) == null
             }
