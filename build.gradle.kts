@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.serialization") version "1.6.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("org.openjfx.javafxplugin") version "0.0.13"
+    id("me.champeau.jmh") version "0.7.1"
     application
 }
 
@@ -17,6 +18,14 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
+
+    // Micro Benchmark
+    jmh("org.openjdk.jmh:jmh-core:1.36")
+    jmh("org.openjdk.jmh:jmh-generator-annprocess:1.36")
+    // this is the line that solves the missing /META-INF/BenchmarkList error
+    jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.36")
+
     // Графический интерфейс
     api("org.jetbrains.skija:skija-windows:0.93.6")
     implementation("org.openjfx:javafx-controls:16")
