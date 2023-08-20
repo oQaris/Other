@@ -13,8 +13,13 @@ repositories {
 }
 
 dependencies{
+    implementation("org.junit.jupiter:junit-jupiter:5.9.2")
     // Сериализация
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-properties:1.4.1")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.shadowJar {

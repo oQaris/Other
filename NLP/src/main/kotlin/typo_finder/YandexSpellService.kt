@@ -33,7 +33,7 @@ class YandexSpellService {
         if (input.all { it in cache.keys })
             return input.map { cache[it]!! }
 
-        return input.toList().chunked(100).flatMap {
+        return input.chunked(50).flatMap {
             val local = it.toTypedArray()
             speller.getSpelledPhrases(local, Language.RUSSIAN)
                 .mapIndexed { i, patch ->

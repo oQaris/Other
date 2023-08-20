@@ -9,9 +9,8 @@ class PropertiesCollector(
     private val exeFile: Path,
     private val isBackup: Boolean = false,
     private val isFullLog: Boolean = true,
-    private val isBoldMode: Boolean = true,
+    private val isFatMode: Boolean = true,
 ) {
-    private val pattern = "properties([/\\\\][\\w-\\\\.]+)+".toRegex()
     private val origWorkDir = exeFile.toAbsolutePath().parent.normalize()
     private val setProps = mutableSetOf<String>()
 
@@ -36,8 +35,9 @@ class PropertiesCollector(
             for (line in process.inputStream.bufferedReader().lineSequence()) {
                 if (isFullLog) println(line)
 
-                val propStr = pattern.find(line)?.value ?: continue
+                val propStr = extractProperty(line) ?: continue
                 if (setProps.add(propStr)) {
+                    // Чтобы исключить множественное добавление необязательных свойств
                     addProperty(propStr)
                         .also { isUpdate = it }
                         // если успешно добавили, то завершаем процесс, но дочитываем из выходного потока
@@ -45,40 +45,25 @@ class PropertiesCollector(
                 }
             }
             process.waitFor()
-            if (isBackup)
-                deleteDirectory(curWorkDir)
+            if (isBackup) deleteDirectory(curWorkDir)
 
             if (!isUpdate) {
                 if (process.exitValue() == 0)
                     println("Correct Work")
                 else println("Another Exception")
-                return
+                break
             }
         }
-    }
-
-    private fun cloneWorkDir(workDir: Path): Path {
-        var newPath: Path
-        var i = 0
-        while (true) {
-            newPath = workDir.parent.resolve("${workDir.fileName}_$i")
-            i++
-            if (!newPath.toFile().exists())
-                break
-        }
-        Files.walk(workDir).forEach {
-            Files.copy(
-                it, newPath.resolve(workDir.relativize(it)),
-                StandardCopyOption.REPLACE_EXISTING
-            )
-        }
-        return newPath
+        println("Used properties:")
+        println(setProps.joinToString("\n"))
     }
 
     private fun addProperty(name: String): Boolean {
-        val dest = origWorkDir.resolve(name)
-        val src = origProps.parent.resolve(name)
+        fun Path.toDir() = let { if (isFatMode) it.parent else it }
+        val dest = origWorkDir.resolve(PROP_STR + name).toDir()
+        val src = origProps.resolve(name).toDir()
         if (!src.toFile().exists()) {
+            // Если что то не обязательное (типа кеша профилей)
             println("[?] " + src.toAbsolutePath())
             return false
         }
@@ -86,21 +71,5 @@ class PropertiesCollector(
         Files.createDirectories(dest.parent)
         Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING)
         return true
-    }
-
-    private fun deleteDirectory(directory: Path) {
-        Files.walk(directory)
-            .sorted(Comparator.reverseOrder())
-            .map { it.toFile() }
-            .forEach { it.delete() }
-    }
-
-    private fun prepareCommand(curExeFile: Path): List<String> {
-        if (curExeFile.fileName.toString().endsWith(".jar"))
-            return listOf("java", "-jar", curExeFile.toString())
-        /*if (curExeFile.name.endsWith(".txt"))
-            return curExeFile.bufferedReader().readLine()
-                .split("\\s".toRegex()).filter { it.isNotBlank() }*/
-        return listOf(curExeFile.toString())
     }
 }
