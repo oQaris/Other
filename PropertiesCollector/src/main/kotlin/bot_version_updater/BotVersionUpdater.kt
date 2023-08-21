@@ -45,7 +45,7 @@ class BotVersionUpdater {
         return try {
             origMsg.split("\n").first()
                 .split("-").let {
-                    it[0].trim().take(3) + " " + it[1].trim()
+                    it[0].trim().take(3) + " " + it.drop(1).joinToString("-").trim()
                 }
         } catch (e: Exception) {
             origMsg // Если сообщение коммита не соответствует формату
@@ -101,13 +101,20 @@ class BotVersionUpdater {
         val allRepos = listOf(File(".")) + (File("submodules").listFiles()?.toList() ?: listOf<File>())
         return buildList {
             allRepos.forEach { dir ->
-                val gitStatusProcess = ProcessBuilder("git", "diff", "--name-status", "HEAD~1", "HEAD")
+                val gitLogProcess = ProcessBuilder("git", "log", "--oneline", "origin/master..HEAD")
                     .directory(dir)
                     .start()
-                val output = gitStatusProcess.inputStream.reader().readText()
-                addAll(gitModifiedFilesPattern.findAll(output).map {
-                    File(it.groups[1]!!.value)
-                }.toList())
+                val countNewCommits = gitLogProcess.inputStream.reader().readLines().count()
+                if (countNewCommits > 0) {
+                    val gitDiffProcess =
+                        ProcessBuilder("git", "diff", "--name-status", "HEAD~$countNewCommits", "HEAD")
+                            .directory(dir)
+                            .start()
+                    val output = gitDiffProcess.inputStream.reader().readText()
+                    addAll(gitModifiedFilesPattern.findAll(output).map {
+                        File(it.groups[1]!!.value)
+                    }.toList())
+                }
             }
         }
     }

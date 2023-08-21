@@ -1,3 +1,5 @@
+package processors
+
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.File

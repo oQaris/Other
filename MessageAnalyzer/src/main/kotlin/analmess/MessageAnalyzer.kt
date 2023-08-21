@@ -46,7 +46,7 @@ fun loadChat(fileName: String) =
 
 
 fun main() {
-    /*voiceToText()
+    /*processors.voiceToText()
     return*/
 
     /*val freqByUser = wordsFrequency(userToMessages["Артём Мухамед-Каримов"]!!)
