@@ -10,9 +10,9 @@ fun main() {
     // Какую директорию перебирать
     val roots = listOf("Z:\\ml")
     // Название выходного файла в папке logs
-    val report = "ml.csv"
+    val report = "ml2.csv"
     // Расширения имён файлов, в которых надо искать опечатки (если пустое - ищется во всех)
-    val ext = projExts
+    val ext = setOf<String>()
 
     var timeMark = System.currentTimeMillis()
     fun getDurationSec() = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - timeMark)
@@ -59,7 +59,7 @@ fun buildTyposWithFreqQueue(roots: List<String>, extraDictionary: ExtraDictionar
     println("Search for typos in ${roots.joinToString()}\nin files with extensions:\n" + exts.joinToString())
     File("list_file_typos.txt").printWriter().apply {
 
-        combSequenceFiles(roots).forEach { file ->
+        combSequenceFiles(roots, extsFilter(exts)).forEach { file ->
             val typoWords = file.bufferedReader()
                 .lineSequence().flatMap { line ->
                     line.rusWords().filterNot {

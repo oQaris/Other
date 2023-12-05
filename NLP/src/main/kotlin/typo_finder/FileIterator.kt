@@ -25,6 +25,8 @@ val projExts = setOf(
 )
 
 fun extsFilter(exts: Set<String>): (File) -> Boolean {
+    if (exts.isEmpty())
+        return { true }
     return { f -> exts.any { f.name.endsWith(".$it") } }
 }
 
