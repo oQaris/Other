@@ -79,7 +79,7 @@ class YandexSpellService {
 @Serializable
 @OptIn(ExperimentalSerializationApi::class)
 class YandexSpellerCache(
-    @Transient private val file: File = File("data/yandex_cache.json")
+    @Transient private val file: File = File("data/cache/yandex_speller.json")
 ) : MutableMap<String, String> by loadFromJsonFile(file) {
 
     private companion object {

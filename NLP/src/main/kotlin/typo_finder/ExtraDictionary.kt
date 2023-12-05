@@ -2,7 +2,7 @@ package typo_finder
 
 import java.io.File
 
-class ExtraDictionary(src: File = File("data/extra_dictionary.txt")) {
+class ExtraDictionary(src: File = File("data/cache/extra_dictionary.txt")) {
     val extraDictionary = src.readLines()
 
     operator fun contains(word: String) = extraDictionary.any { dctWord ->

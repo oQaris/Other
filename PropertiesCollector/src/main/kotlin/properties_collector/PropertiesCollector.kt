@@ -9,7 +9,7 @@ class PropertiesCollector(
     private val exeFile: Path,
     private val isBackup: Boolean = false,
     private val isFullLog: Boolean = true,
-    private val isFatMode: Boolean = true,
+    private val isFatMode: Boolean = false,
 ) {
     private val origWorkDir = exeFile.toAbsolutePath().parent.normalize()
     private val setProps = mutableSetOf<String>()
@@ -59,11 +59,12 @@ class PropertiesCollector(
     }
 
     private fun addProperty(name: String): Boolean {
+        //todo не работает isFatMode
         fun Path.toDir() = let { if (isFatMode) it.parent else it }
-        val dest = origWorkDir.resolve(PROP_STR + name).toDir()
+        val dest = origWorkDir.resolve(Path.of(PROP_STR, name)).toDir()
         val src = origProps.resolve(name).toDir()
         if (!src.toFile().exists()) {
-            // Если что то не обязательное (типа кеша профилей)
+            // Если что-то не обязательное (типа кеша профилей)
             println("[?] " + src.toAbsolutePath())
             return false
         }

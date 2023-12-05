@@ -3,13 +3,38 @@ package properties_collector
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.name
 
 const val PROP_STR = "properties"
 
+//val PROP_ROOT: Path = Path.of("$PROP_STR/")
+//val PROP_PATTERN = ".*?(?:$PROP_STR)?(([/\\\\][\\w-\\\\.]+)+)".toRegex()
+val PATH_PATTERN = "([\\w-\\\\.]+[/\\\\])+[\\w-\\\\.]+".toRegex()
+val PROP_PATTERN = ".*Exception:.*$PATH_PATTERN.*".toRegex()
+
 fun extractProperty(line: String): String? {
-    //todo слово properties может отсутствовать, но обязательно есть "Exception:"
-    val pattern = ".*Exception: (?:$PROP_STR)?(([/\\\\][\\w-\\\\.]+)+)".toRegex()
-    return pattern.matchEntire(line)?.groups?.get(1)?.value
+    if (!PROP_PATTERN.matches(line)) return null
+    return extractPaths(line)
+        .map { Path.of(it).normalize() }
+        .map {
+            if (it.getName(0).name == PROP_STR)
+                it.subpath(1, it.nameCount)
+            else it
+        }.map { it.toString() }
+        .distinct()
+        .nullOrSingle()
+}
+
+private fun extractPaths(line: String): List<String> {
+    return PATH_PATTERN.findAll(line).toList().map { it.value }
+}
+
+fun <T> List<T>.nullOrSingle(): T? {
+    return when (size) {
+        0 -> null
+        1 -> this[0]
+        else -> null
+    }
 }
 
 fun cloneWorkDir(workDir: Path): Path {

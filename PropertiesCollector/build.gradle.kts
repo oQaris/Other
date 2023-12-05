@@ -23,11 +23,11 @@ tasks.test {
 }
 
 tasks.shadowJar {
-    archiveFileName.set("bot_version_updater.jar")
+    archiveFileName.set("pc.jar")
     mergeServiceFiles()
     minimize()
 }
 
 application {
-    mainClass.set("bot_version_updater/BotVersionUpdaterKt")
+    mainClass.set("properties_collector/StarterKt")
 }

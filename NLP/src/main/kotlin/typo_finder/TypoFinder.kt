@@ -8,21 +8,25 @@ import java.util.concurrent.TimeUnit
 
 fun main() {
     // Какую директорию перебирать
-    val roots = listOf("Z:\\igas")
+    val roots = listOf("Z:\\ml")
+    // Название выходного файла в папке logs
+    val report = "ml.csv"
+    // Расширения имён файлов, в которых надо искать опечатки (если пустое - ищется во всех)
+    val ext = projExts
 
     var timeMark = System.currentTimeMillis()
     fun getDurationSec() = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - timeMark)
         .also { timeMark = System.currentTimeMillis() }
 
     println("Запущен поиск комментариев...")
-    val allTypos = buildTyposWithFreqQueue(roots, ExtraDictionary())
+    val allTypos = buildTyposWithFreqQueue(roots, ExtraDictionary(), ext)
 
     println("Все файлы обработаны за ${getDurationSec()} секунд.\nЗапущена доп.проверка опечаток с помощью Yandex.Speller...")
 
     var confirmed = 0
-    val chatter2 = ProgressChatter(31)
+    val chatter = ProgressChatter(35)
     val speller = YandexSpellService()
-    File("test.csv").printWriter().apply {
+    File("logs/$report").printWriter().apply {
         println("Total typos:;" + allTypos.size + ';')
         println("Unique typos:;" + allTypos.toSet().size + ';')
         println("Sorted list of typos:;;")
@@ -33,7 +37,7 @@ fun main() {
                     println("$word;${correct};$count")
                     confirmed++
                 }
-                chatter2.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
+                chatter.incProgress("Обработано $ неизвестных слов. Найдено $confirmed потенциальных опечаток.")
             }
         } catch (e: Exception) {
             println(e)
@@ -46,7 +50,7 @@ fun main() {
     println("Все найденные опечатки обработаны за ${getDurationSec()} секунд.\nПодтверждённых - $confirmed")
 }
 
-fun buildTyposWithFreqQueue(roots: List<String>, extraDictionary: ExtraDictionary): List<String> {
+fun buildTyposWithFreqQueue(roots: List<String>, extraDictionary: ExtraDictionary, exts: Set<String>): List<String> {
     val allTypos = mutableListOf<String>()
     val chatter = ProgressChatter(500) {
         println("Обработано $it файлов. Найдено ${allTypos.size} неизвестных слов.")

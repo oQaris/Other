@@ -2,7 +2,7 @@ package typo_finder
 
 import java.io.File
 
-val exts = setOf(
+val projExts = setOf(
     "txt",
     "MF",
     "md",
@@ -24,14 +24,8 @@ val exts = setOf(
     "java",
 )
 
-// Какие файлы просматривать
-val extsFilter = { f: File ->
-    // с такими расширениями
-    exts.any { f.name.endsWith(".$it") }
-    //true
-    // без такого в названии
-    //&& setOf("values")
-    //.any { f.name.contains(it) }
+fun extsFilter(exts: Set<String>): (File) -> Boolean {
+    return { f -> exts.any { f.name.endsWith(".$it") } }
 }
 
 fun allExts(root: File) = sequenceFiles(root)
@@ -48,7 +42,7 @@ fun sequenceFiles(file: File, filter: (File) -> Boolean = { true }): Sequence<Fi
     }
 }
 
-fun combSequenceFiles(roots: List<String>): Sequence<File> {
-    return roots.map { sequenceFiles(File(it), extsFilter) }
+fun combSequenceFiles(roots: List<String>, filter: (File) -> Boolean = { true }): Sequence<File> {
+    return roots.map { sequenceFiles(File(it), filter) }
         .reduce { acc, sequence -> acc + sequence }
 }
