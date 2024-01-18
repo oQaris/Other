@@ -1,6 +1,8 @@
 package bot_version_updater
 
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.name
 
 /**
  * test description
@@ -39,6 +41,10 @@ class BotVersionUpdater {
         )
     }
 
+    /**
+     * Извлечь последнее сообщение коммита из корневого модуля.
+     * todo Это сообщение не всегда относится к изменённым файлам, например, если не было правок в базовом модуле.
+     */
     private fun extractCommitNote(): String {
         val gitLogProcess = ProcessBuilder("git", "log", "-1", "--pretty=format:%s").start()
         val origMsg = gitLogProcess.inputStream.reader().readText()
@@ -77,6 +83,9 @@ class BotVersionUpdater {
         return newVersion
     }
 
+    /**
+     * Из базовых классов ботов выбрать те, в которых версия ещё не поднималась.
+     */
     private fun getFilesWithUnmodifiedVersions(): List<File> {
         return preparedBotBaseClasses().filter { file ->
             val gitDiffProcess = ProcessBuilder("git", "diff", file.absolutePath).start()
@@ -89,17 +98,26 @@ class BotVersionUpdater {
         }
     }
 
-    private fun preparedBotBaseClasses(): List<File> {
-        return getModifiedFilesLastCommit().filter {
+    /**
+     * По набору изменённых файлов получить соответствующие файлы ботов, в которых надо поднимать версию.
+     */
+    private fun preparedBotBaseClasses(): Set<File> {
+        return getModifiedFiles().map {
+            // Изменения в оппонентах поднимают версию ботов
+            it.parent.resolve(it.name.replace("Opponent", "Bot"))
+        }.filter {
             it.name.contains("Bot")
-        }.map { file ->
-            searchBaseClassIfNeed(file)
-        }
+        }.map {
+            searchBaseClassIfNeed(it.toFile())
+        }.toSet()
     }
 
-    private fun getModifiedFilesLastCommit(): List<File> {
+    /**
+     * Получить множество путей к файлам, изменённым в последних коммитах, которые ещё не в удалённом мастере.
+     */
+    private fun getModifiedFiles(): Set<Path> {
         val allRepos = listOf(File(".")) + (File("submodules").listFiles()?.toList() ?: listOf<File>())
-        return buildList {
+        return buildSet {
             allRepos.forEach { dir ->
                 val gitLogProcess = ProcessBuilder("git", "log", "--oneline", "origin/master..HEAD")
                     .directory(dir)
@@ -111,14 +129,17 @@ class BotVersionUpdater {
                             .directory(dir)
                             .start()
                     val output = gitDiffProcess.inputStream.reader().readText()
-                    addAll(gitModifiedFilesPattern.findAll(output).map {
-                        File(it.groups[1]!!.value)
-                    }.toList())
+                    val paths = gitModifiedFilesPattern.findAll(output)
+                        .map { Path.of(it.groups[1]!!.value) }.toList()
+                    addAll(paths)
                 }
             }
         }
     }
 
+    /**
+     * По файлу с классом бота найти в проекте базовый класс, который отличается только суффиксом Base.
+     */
     private fun searchBaseClassIfNeed(botClass: File): File {
         val baseSuffix = "Base.java"
         return if (botClass.name.endsWith(baseSuffix)) botClass
