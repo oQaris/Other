@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    kotlin("plugin.serialization")
+//    kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
 }
 
@@ -15,7 +15,7 @@ repositories {
 
 dependencies{
     // Сериализация
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-properties:1.4.1")
+//    implementation("org.jetbrains.kotlinx:kotlinx-serialization-properties:1.4.1")
     implementation(kotlin("stdlib-jdk8"))
 }
 

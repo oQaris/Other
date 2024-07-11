@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm")
-    kotlin("plugin.serialization")
+//    kotlin("plugin.serialization")
     application
     java
 }
@@ -21,8 +21,8 @@ dependencies {
     implementation(projects.nlp)
     implementation("com.vdurmont:emoji-java:5.1.1")
     // Сериализация
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
+//    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+//    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
     // Работа с сетью
     implementation("com.vk.api:sdk:1.0.14")
     // Дата

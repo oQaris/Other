@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.10"
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("jvm") version "1.9.23"
+//    kotlin("plugin.serialization") version "1.9.23"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("org.openjfx.javafxplugin") version "0.0.13"
     id("me.champeau.jmh") version "0.7.1"
@@ -19,8 +19,13 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
+
+    // Лексический анализатор
+    implementation("com.github.javaparser:javaparser-core:3.25.8")
+    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.25.8")
 
     // Micro Benchmark
     jmh("org.openjdk.jmh:jmh-core:1.36")
@@ -28,6 +33,7 @@ dependencies {
     // this is the line that solves the missing /META-INF/BenchmarkList error
     jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.36")
 
+    implementation("ru.tinkoff.piapi:java-sdk-core:1.5")
     // Графический интерфейс
     api("org.jetbrains.skija:skija-windows:0.93.6")
     implementation("org.openjfx:javafx-controls:16")
@@ -46,8 +52,8 @@ dependencies {
     // Корутины
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // Сериализация
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
+    //implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    //implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
     // Дата
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation("org.ow2.sat4j:org.ow2.sat4j.core:2.3.6")
